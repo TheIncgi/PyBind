@@ -122,10 +122,9 @@ public class PyBind implements AutoCloseable, Closeable{
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 				if(method.isAnnotationPresent(Py.class)) {
 					Py pyInfo = method.getAnnotation(Py.class);
-					
-					return pyInfo;
+					return bindPy(pyInfo.lib(), pyInfo.name());
 				}
-				return null;
+				throw new RuntimeException("Missing @Py on "+method.getName());
 			}});
 	}
 	

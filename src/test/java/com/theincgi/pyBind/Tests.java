@@ -14,14 +14,16 @@ import com.theincgi.pyBind.pyVals.PyVal;
 
 public class Tests {
 	
-	PyVal add = PyBind.bindPy("simple", "add");
+	PyVal add;
 	
-	PyEx pyEx = PyBind.bindPy( PyEx.class );
+	PyEx pyEx;
 	
 	@Before
 	public void init() throws IOException, InterruptedException {
 		System.out.println("Initalizing...");
 		PyBind.init(); //random port and start python
+		add = PyBind.bindPy("simple", "add");
+		pyEx = PyBind.bindPy( PyEx.class );
 	}
 
 	@Test

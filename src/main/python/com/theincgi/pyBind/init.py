@@ -11,7 +11,7 @@ refs = {}
 def connectToJava( port ):
     global connection
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    connection = s.connect(('locahost',port))
+    connection = s.connect(('127.0.0.1',port))
     print("Python connected")
 
 # act as socket host and launch jvm
@@ -39,10 +39,10 @@ def runMessageHandler():
         raise Exception("Not connected")
 
 def main(port: int):
-    print("Connecting to java on port %d" % (port,), flush=True)
+    print("Connecting to java on port %d" % (port,))
     connectToJava(port)
 
 
-print("PYTHON", flush=True)
+print("PYTHON")
 if __name__ == "__main__":
     main( int(argv[1]) )

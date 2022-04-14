@@ -1,11 +1,15 @@
 package com.theincgi.pyBind.pyVals;
 
+import static com.theincgi.pyBind.Common.expected;
+
 import java.util.LinkedHashMap;
 
+import com.theincgi.pyBind.Common;
 import com.theincgi.pyBind.PyTypeMismatchException;
 
 public abstract class PyVal {
 	private String typeName;
+	
 	public PyVal() {
 	}
 	
@@ -35,8 +39,21 @@ public abstract class PyVal {
 		return typeName;
 	}
 	
+	public boolean isRef() {
+		return false;
+	}
+	
 	public int toInt() {
 		throw new PyTypeMismatchException();
+	}
+	public int toInt(int def) {
+		return def;
+	}
+	public PyInt toPyInt() { //or cast?
+		throw new PyTypeMismatchException(expected("int", getType()));
+	}
+	public boolean isInt() {
+		return false;
 	}
 	
 	@Override
