@@ -12,8 +12,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.theincgi.pyBind.pyVals.PyFunc;
 import com.theincgi.pyBind.pyVals.PyVal;
@@ -49,9 +53,11 @@ public class PyBind implements AutoCloseable, Closeable{
 	}
 	private static void initJavaHost() throws IOException, InterruptedException {
 		final ServerSocket ss = new ServerSocket(0, 0, null);
-		int port = ss.getLocalPort();
-		Future<Socket> socket = new FutureTask<Socket>(()->{
+		final int port = ss.getLocalPort();
+		
+		var socket = Executors.newSingleThreadExecutor().submit(()->{
 			try {
+				System.out.println("Waiting for connection on port "+port);
 				return ss.accept();
 			}finally {
 				ss.close();
@@ -59,13 +65,20 @@ public class PyBind implements AutoCloseable, Closeable{
 		});
 		
 		
+		
 		pyProcess = launchPython(port);
 		
 		try {
-			PyBind.socket = socket.get();
+			PyBind.socket = socket.get(15, TimeUnit.SECONDS);
+			System.out.println("Connected!");
 		} catch (InterruptedException e) {
 			throw e;
 		} catch (ExecutionException e) {
+			throw new IOException(e);
+		} catch (TimeoutException e) {
+//			new String(pyProcess.getInputStream().readAllBytes())
+//			new String(pyProcess.getErrorStream().readAllBytes())
+			pyProcess.destroy();
 			throw new IOException(e);
 		}
 	}
@@ -74,21 +87,26 @@ public class PyBind implements AutoCloseable, Closeable{
 	}
 	
 	private static Process launchPython(int port) throws IOException {
-		putScript("pyBind/init.py");
-		ProcessBuilder pb = new ProcessBuilder(pythonCmd, port+"");
+		putScript("init.py");
+		ProcessBuilder pb = new ProcessBuilder(pythonCmd,"-u", "pyBind/init.py", port+"");
 		pb.directory(pythonWorkingDir);
 		pb.inheritIO();
 		return pb.start();
 	}
 	
 	private static void putScript(String f) throws IOException {
-		File to = new File(pythonWorkingDir, f);
+		File to = new File(new File(pythonWorkingDir,"pyBind"), f);
 		if(to.exists()) return;
 		
 		to.getParentFile().mkdirs();
 		try(FileOutputStream fos = new FileOutputStream(to)){
-			fos.write(PyBind.class.getResourceAsStream(f).readAllBytes());
+			try(var stream = PyBind.class.getResourceAsStream(f)){
+				if(stream==null)
+					throw new NullPointerException("Couldn't load resource '"+f+"'");
+				fos.write(stream.readAllBytes());
+			}
 		}
+		System.out.println("Copied "+f);
 	}
 	
 	public static String getPyVersion() {

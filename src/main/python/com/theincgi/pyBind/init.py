@@ -11,13 +11,14 @@ refs = {}
 def connectToJava( port ):
     global connection
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    connection = s.connect('locahost',port)
+    connection = s.connect(('locahost',port))
+    print("Python connected")
 
 # act as socket host and launch jvm
 def launchJava(file, javaCmd=["java","-jar"]):
     global connection
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('locahost', 0))
+    server.bind(('127.0.0.1', 0))
     port = server.gettsockname()[1]
     server.listen(1)
     
@@ -34,12 +35,14 @@ def launchJava(file, javaCmd=["java","-jar"]):
     connection = socket
 
 def runMessageHandler():
-    if not connection or connection.is:
+    if not connection:
         raise Exception("Not connected")
 
 def main(port: int):
+    print("Connecting to java on port %d" % (port,), flush=True)
     connectToJava(port)
 
 
+print("PYTHON", flush=True)
 if __name__ == "__main__":
     main( int(argv[1]) )

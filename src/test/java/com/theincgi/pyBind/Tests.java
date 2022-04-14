@@ -20,6 +20,7 @@ public class Tests {
 	
 	@Before
 	public void init() throws IOException, InterruptedException {
+		System.out.println("Initalizing...");
 		PyBind.init(); //random port and start python
 	}
 
