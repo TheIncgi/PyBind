@@ -9,6 +9,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -17,6 +18,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.WeakHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -25,6 +27,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import com.theincgi.pyBind.PyBindSockerHandler.Actions;
 import com.theincgi.pyBind.PyBindSockerHandler.ResultMode;
@@ -131,10 +136,38 @@ public class PyBind implements AutoCloseable, Closeable{
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 				if(method.isAnnotationPresent(Py.class)) {
 					Py pyInfo = method.getAnnotation(Py.class);
+					var paramInfo = method.getParameterAnnotations();
 					String key = pyInfo.lib() + "#" + pyInfo.name();
-					return generated.computeIfAbsent(key, k->{						
+					PyFunc func = generated.computeIfAbsent(key, k->{						
 						return bindPy(pyInfo.lib(), pyInfo.name());
 					});
+					
+					JSONObject callInfo = new JSONObject();
+					JSONArray callArgs = new JSONArray();
+					JSONObject callKwargs = new JSONObject();
+					callInfo.put("args", callArgs);
+					callInfo.put("kwargs", callKwargs);
+					
+					//coerce input
+					for(int i = 0; i < args.length; i++) {
+						Object arg = args[i];
+						PyVal pyArg = PyVal.toPyVal(arg);
+						String kwargName = Common.findKwargName(paramInfo[i]);
+						if( kwargName != null ) {
+							callKwargs.put(kwargName, pyArg.asJsonValue());
+						}else {
+							callArgs.put(pyArg.asJsonValue());
+						}
+					}
+					
+					JSONObject f = socketHandler.send(Actions.CALL, pyInfo.mode(), callInfo);
+					
+					Class rType = method.getReturnType();
+					if(rType.equals(Void.class))
+						return null;
+					
+					PyVal result = PyVal.fromJson(f);
+					return Common.coerce(result, rType);
 				}
 				throw new RuntimeException("Missing @Py on "+method.getName());
 			}});

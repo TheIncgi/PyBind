@@ -28,4 +28,8 @@ public class PyBool extends PyVal {
 		return Boolean.toString(value);
 	}
 	
+	@Override
+	public String getType() {
+		return "bool";
+	}
 }

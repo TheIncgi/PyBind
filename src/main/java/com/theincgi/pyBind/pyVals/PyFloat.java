@@ -26,4 +26,9 @@ public class PyFloat extends PyVal {
 	public PyInt checkInt() {
 		return PyInt.valueOf((int) value);
 	}
+	
+	@Override
+	public String getType() {
+		return "float";
+	}
 }

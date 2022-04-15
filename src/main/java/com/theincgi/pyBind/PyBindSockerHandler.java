@@ -34,8 +34,10 @@ public class PyBindSockerHandler {
 		return future;
 	}
 	
-	public Optional<PyVal> send(Actions action, ResultMode mode,  Object...objects) {
-		
+	public JSONObject send(Actions action, ResultMode mode,  JSONObject info) {
+		info.put("op", action.name());
+		info.put("mode", mode.name());
+		return new JSONObject(send(info).get());
 	}
 	
 	public PyVal bind(String lib, String name) throws InterruptedException, ExecutionException, IOException {

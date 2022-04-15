@@ -11,10 +11,14 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import com.theincgi.pyBind.PyBindSockerHandler.ResultMode;
+
 @Documented
 @Retention(RUNTIME)
 @Target({FIELD, METHOD})
 public @interface Py {
 	String lib();
 	String name();
+	ResultMode mode() default ResultMode.COPY;
+	Class[] listClasses() default {};
 }
