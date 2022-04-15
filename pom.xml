@@ -3,6 +3,17 @@
   <groupId>com.theincgi</groupId>
   <artifactId>PyBind</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+  
+  <dependencies>
+  	<!-- https://mvnrepository.com/artifact/org.json/json -->
+	<dependency>
+	    <groupId>org.json</groupId>
+	    <artifactId>json</artifactId>
+	    <version>20220320</version>
+	</dependency>
+
+  </dependencies>
+  
   <build>
     <plugins>
       <plugin>

@@ -1,6 +1,6 @@
 package com.theincgi.pyBind;
 
-public class PyTypeMismatchException extends RuntimeException {
+public class PyTypeMismatchException extends PyBindException {
 
 	public PyTypeMismatchException() {
 		super();

@@ -1,5 +1,10 @@
 package com.theincgi.pyBind;
 
+import static com.theincgi.pyBind.PyBindSockerHandler.Actions.EXEC;
+import static com.theincgi.pyBind.PyBindSockerHandler.ResultMode.COPY;
+import static com.theincgi.pyBind.PyBindSockerHandler.ResultMode.IGNORE;
+import static com.theincgi.pyBind.PyBindSockerHandler.ResultMode.REF;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -11,6 +16,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.WeakHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,19 +26,21 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.theincgi.pyBind.PyBindSockerHandler.Actions;
+import com.theincgi.pyBind.PyBindSockerHandler.ResultMode;
 import com.theincgi.pyBind.pyVals.PyFunc;
 import com.theincgi.pyBind.pyVals.PyVal;
 
 public class PyBind implements AutoCloseable, Closeable{
 	
 	private static PyBindings pyBinds;
-	private static Socket socket;
+	private static PyBindSockerHandler socketHandler;
 	private static Process pyProcess;
 	
-	private static String pythonCmd = "python";
+	private static File pythonCmd = Common.findOnPath("python.exe");
 	private static File pythonWorkingDir = new File(System.getProperty("user.dir"));
 	
-	public static void setPythonCmd(String pythonCmd) {
+	public static void setPythonCmd(File pythonCmd) {
 		PyBind.pythonCmd = pythonCmd;
 	}
 	
@@ -69,7 +78,7 @@ public class PyBind implements AutoCloseable, Closeable{
 		pyProcess = launchPython(port);
 		
 		try {
-			PyBind.socket = socket.get(15, TimeUnit.SECONDS);
+			PyBind.socketHandler = new PyBindSockerHandler(socket.get(15, TimeUnit.SECONDS));
 			System.out.println("Connected!");
 		} catch (InterruptedException e) {
 			throw e;
@@ -83,12 +92,12 @@ public class PyBind implements AutoCloseable, Closeable{
 		}
 	}
 	private static void initPythonHost(int port) throws IOException {
-		PyBind.socket = new Socket(InetAddress.getByName(null), port);
+		PyBind.socketHandler = new PyBindSockerHandler(new Socket(InetAddress.getByName(null), port));
 	}
 	
 	private static Process launchPython(int port) throws IOException {
 		putScript("init.py");
-		ProcessBuilder pb = new ProcessBuilder(pythonCmd,"-u", "pyBind/init.py", port+"");
+		ProcessBuilder pb = new ProcessBuilder(pythonCmd.getAbsolutePath(),"-u", "pyBind/init.py", port+"");
 		pb.directory(pythonWorkingDir);
 		pb.inheritIO();
 		return pb.start();
@@ -116,13 +125,16 @@ public class PyBind implements AutoCloseable, Closeable{
 	@SuppressWarnings("unchecked")
 	public static <T> T bindPy(Class<T> cls) {
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
-		
+		WeakHashMap<String, PyFunc> generated = new WeakHashMap<>();
 		return (T) Proxy.newProxyInstance(cl, new Class[] {cls}, new java.lang.reflect.InvocationHandler() {
 			@Override
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 				if(method.isAnnotationPresent(Py.class)) {
 					Py pyInfo = method.getAnnotation(Py.class);
-					return bindPy(pyInfo.lib(), pyInfo.name());
+					String key = pyInfo.lib() + "#" + pyInfo.name();
+					return generated.computeIfAbsent(key, k->{						
+						return bindPy(pyInfo.lib(), pyInfo.name());
+					});
 				}
 				throw new RuntimeException("Missing @Py on "+method.getName());
 			}});
@@ -133,19 +145,18 @@ public class PyBind implements AutoCloseable, Closeable{
 		return null;
 	}
 	
-	public static PyVal exec(String python) {
-		return null;
+	public static PyBindSockerHandler getSocketHandler() {
+		return socketHandler;
 	}
 	
-	private class ListeningClassLoader extends ClassLoader {
-		public ListeningClassLoader() {
-		}
-		@Override
-		public Class<?> loadClass(String name) throws ClassNotFoundException {
-			System.out.println(name);
-			return super.loadClass(name);
-		}
+	public static void exec(String python) {
+		socketHandler.send(EXEC, IGNORE, python);
 	}
+	public static PyVal exec(String python, boolean resultAsRef) {
+		return socketHandler.send(EXEC, resultAsRef? REF : COPY, python);
+	}
+	
+	
 	
 	public void close() throws IOException {
 		socket.close();

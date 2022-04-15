@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
@@ -38,14 +39,14 @@ public class Tests {
 	
 	@Test
 	public void threadTest() {
-		Future<Integer> f = new FutureTask<Integer>(()->{
+		Future<Integer> f = Executors.newSingleThreadExecutor().submit(()->{
 			return ThreadTest.sub.c(50,9).toInt();
 		});
 		try {
 			assertEquals(41, f.get().intValue());
 		} catch (InterruptedException | ExecutionException e) {
 			e.printStackTrace();
-			fail();
+			fail(e.toString());
 		}
 	}
 	
