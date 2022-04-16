@@ -22,4 +22,9 @@ public class PyNone extends PyVal {
 	public String toStr() {
 		return "None";
 	}
+	
+	@Override
+	public boolean toBool() {
+		return false;
+	}
 }

@@ -38,5 +38,18 @@ public class PyTuple extends PyVal {
 		return this;
 	}
 	
+	@Override
+	public boolean isIndexable() {
+		return true;
+	}
 	
+	@Override
+	public boolean toBool() {
+		return values.length > 0;
+	}
+	
+	@Override
+	public int len() {
+		return values.length;
+	}
 }

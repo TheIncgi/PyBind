@@ -18,9 +18,9 @@ import com.theincgi.pyBind.PyTypeMismatchException;
 //to___(def)->java reperesentation with a default if it can't convert
 //is___    -> type is exactly ____
 public abstract class PyVal {
-	public static final PyVal NONE = new PyNone(),
-						      TRUE = PyBool.TRUE,
-						      FALSE = PyBool.FALSE;
+	public static final PyNone NONE = new PyNone();
+	public static final PyBool TRUE = PyBool.TRUE,
+						       FALSE = PyBool.FALSE;
 	
 	public PyVal() {
 	}
@@ -60,10 +60,13 @@ public abstract class PyVal {
 		return false;
 	}
 	
+	public boolean isObj() {
+		return false;
+	}
+	
 	/**
 	 * Returns true if this is a reference to something in<br>
 	 * the python environment.<br>
-	 * Referenced values must be evaluated or set before they can be inspected.
 	 * */
 	public boolean isRef() {
 		return false;
@@ -305,37 +308,48 @@ public abstract class PyVal {
 	 * return a array of PyVal<br>
 	 * else throw {@link PyTypeMismatchException}
 	 * */
-	public abstract PyVal[] toArray();
+	public PyVal[] toArray() {
+		throw new PyTypeMismatchException( Common.expected("list or tuple", getType()) );
+	}
 	
 	/**
 	 * Return true if using [] operator on this value is valid
 	 * */
-	public abstract boolean isIndexable();
-	
+	public boolean isIndexable() {
+		return false;
+	}
 	//boolean
 	
 	/**
 	 * returns equivalent of bool( value )
 	 * */
-	public abstract boolean toBool();
+	public boolean toBool() {
+		return true;
+	}
 	
 	/**
 	 * return true if this value is a boolean
 	 * */
-	public abstract boolean isBool();
+	public boolean isBool() {
+		return false;
+	}
 	
 	/**
 	 * if {@link #isBool()} then<br>
 	 * return this as {@link PyBool}<br>
 	 * else throw new {@link PyTypeMismatchException}
 	 * */
-	public abstract PyBool checkBool();
+	public PyBool checkBool() {
+		throw new PyTypeMismatchException( Common.expected("bool", getType()) );
+	}
 	
 	/**
 	 * return this value as a PyBool<br>
 	 * uses {@link #toBool()} if it is not already a boolean
 	 * */	
-	public abstract PyBool boolVal();
+	public PyBool boolVal() {
+		return toBool() ? TRUE : FALSE;
+	}
 	
 	/**
 	 * returns true if the type is PyInt or PyFloat
@@ -348,7 +362,9 @@ public abstract class PyVal {
 	 * return the result of len( value )<br>
 	 * may through {@link PyBindException} if it is not valid for this type
 	 * */
-	public abstract int len();
+	public int len() {
+		throw new PyTypeMismatchException("object of type '%s' has no len()".formatted(getType()));
+	}
 	
 	/**
 	 * return an attribute from an object (. operator)<br>
@@ -389,15 +405,6 @@ public abstract class PyVal {
 	 * for generators, gets the next value
 	 * */
 	public abstract PyVal next();
-	
-	/**
-	 * if {@link #isRef()} then<br>
-	 * gets the current value<br>
-	 * else no-op
-	 * */
-	public PyVal eval() {
-		return this;
-	}
 	
 	public abstract Object asJsonValue();
 	

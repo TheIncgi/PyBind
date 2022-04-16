@@ -10,7 +10,10 @@ import com.theincgi.pyBind.PyBindException;
 public class PyList extends PyVal {
 	private ArrayList<PyVal> list = new ArrayList<>();
 	
-	public PyList(PyList...values) {
+	public PyList() {
+	}
+	
+	public PyList(PyVal...values) {
 		Collections.addAll(list, values);
 	}
 	
@@ -47,4 +50,18 @@ public class PyList extends PyVal {
 		return this;
 	}
 	
+	@Override
+	public boolean isIndexable() {
+		return true;
+	}
+	
+	@Override
+	public boolean toBool() {
+		return list.size() > 0;
+	}
+	
+	@Override
+	public int len() {
+		return list.size();
+	}
 }

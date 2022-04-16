@@ -85,4 +85,9 @@ public class PyInt extends PyVal {
 		return floatVal();
 	}
 	
+	
+	@Override
+	public boolean toBool() {
+		return value != 0;
+	}
 }

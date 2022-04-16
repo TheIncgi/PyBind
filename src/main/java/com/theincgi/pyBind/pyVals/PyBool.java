@@ -2,13 +2,15 @@ package com.theincgi.pyBind.pyVals;
 
 import java.util.LinkedHashMap;
 
+import com.theincgi.pyBind.Common;
 import com.theincgi.pyBind.PyBindException;
+import com.theincgi.pyBind.PyTypeMismatchException;
 
 public class PyBool extends PyVal {
 	private final boolean value;
 	public static PyBool TRUE = new PyBool(true), FALSE = new PyBool(false);
 	
-	public PyBool(boolean value) {
+	private PyBool(boolean value) {
 		this.value = value;
 	}
 
@@ -50,5 +52,20 @@ public class PyBool extends PyVal {
 	@Override
 	public double toDouble(double defValue) {
 		return value ? 1 : 0;
+	}
+	
+	@Override
+	public boolean toBool() {
+		return value;
+	}
+	
+	@Override
+	public boolean isBool() {
+		return true;
+	}
+	
+	@Override
+	public PyBool checkBool() {
+		return this;
 	}
 }

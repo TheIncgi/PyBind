@@ -69,4 +69,9 @@ public class PyFloat extends PyVal {
 		return this;
 	}
 	
+	@Override
+	public boolean toBool() {
+		return value != 0;
+	}
+	
 }

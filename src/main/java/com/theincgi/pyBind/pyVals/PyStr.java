@@ -72,4 +72,14 @@ public class PyStr extends PyVal {
 	public PyFloat floatVal(double defValue) {
 		return new PyFloat(toDouble(defValue));
 	}
+	
+	@Override
+	public boolean toBool() {
+		return value.length() > 0;
+	}
+	
+	@Override
+	public int len() {
+		return value.length();
+	}
 }

@@ -1,5 +1,6 @@
 package com.theincgi.pyBind;
 
+import static com.theincgi.pyBind.PyBindSockerHandler.Actions.EVAL;
 import static com.theincgi.pyBind.PyBindSockerHandler.Actions.EXEC;
 import static com.theincgi.pyBind.PyBindSockerHandler.ResultMode.COPY;
 import static com.theincgi.pyBind.PyBindSockerHandler.ResultMode.IGNORE;
@@ -185,8 +186,11 @@ public class PyBind implements AutoCloseable, Closeable{
 	public static void exec(String python) {
 		socketHandler.send(EXEC, IGNORE, python);
 	}
-	public static PyVal exec(String python, boolean resultAsRef) {
-		return socketHandler.send(EXEC, resultAsRef? REF : COPY, python);
+	public static PyVal eval(String python, PyVal...args) {
+		return socketHandler.send(EVAL, COPY, python, args);
+	}
+	public static PyVal evalRef(String python, PyVal...args) {
+		return socketHandler.send(EVAL, REF, python, args);
 	}
 	
 	

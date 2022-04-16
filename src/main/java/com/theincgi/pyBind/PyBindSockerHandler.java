@@ -122,7 +122,8 @@ public class PyBindSockerHandler {
 		GET, //plain value
 		SET, //ref
 		CALL,
-		EXEC;
+		EXEC,
+		EVAL;
 	}
 	public enum ResultMode {
 		COPY,

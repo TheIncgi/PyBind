@@ -17,7 +17,7 @@ public class PyFunc extends PyVal {
 	private final String refUUID;
 	
 	
-	private PyFunc(String refUUID) {
+	public PyFunc(String refUUID) {
 		this.refUUID = refUUID;
 	}
 	
@@ -56,4 +56,5 @@ public class PyFunc extends PyVal {
 	public String toStr() {
 		return "<function>";
 	}
+	
 }
