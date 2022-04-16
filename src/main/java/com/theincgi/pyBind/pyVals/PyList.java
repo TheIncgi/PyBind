@@ -25,6 +25,26 @@ public class PyList extends PyVal {
 		for(PyVal v : list)
 			out.add(v.toStr());
 		return out.toString();
+	}                                                                                                                                                                                                                       
+	
+	@Override
+	public PyTuple tupleVal() {
+		return new PyTuple( list.toArray(new PyVal[list.size()]) );
 	}
-
+	
+	@Override
+	public boolean isList() {
+		return true;
+	}
+	
+	@Override
+	public PyList checkList() {
+		return this;
+	}
+	
+	@Override
+	public PyList toList() {
+		return this;
+	}
+	
 }

@@ -227,40 +227,52 @@ public abstract class PyVal {
 	 * returns this as PyFloat<br>
 	 * else throw {@link PyTypeMismatchException}<br>
 	 * */
-	public abstract PyFloat checkDouble();
+	public PyFloat checkDouble() {
+		throw new PyTypeMismatchException( Common.expected("float", getType()) );
+	}
 	
 	/**
 	 * if float( value ) is valid<br>
 	 * return this as a {@link PyFloat}<br>
 	 * else throw {@link PyTypeMismatchException}
 	 * */
-	public abstract PyFloat floatVal();
+	public PyFloat floatVal() {
+		throw new PyTypeMismatchException( Common.expected("float", getType()) );
+	}
 	
 	/**
 	 * if float( value ) is valid<br>
 	 * return this as a {@link PyFloat}<br>
 	 * else return defValue as {@link PyFloat}
 	 * */
-	public abstract PyFloat floatVal(double defValue);
+	public PyFloat floatVal(double defValue) {
+		throw new PyTypeMismatchException( Common.expected("float", getType()) );
+	}
 	
 	//tuple
 	/**
 	 * Return true if this is a tuple
 	 * */
-	public abstract boolean isTuple();
+	public boolean isTuple() {
+		return false;
+	}
 	/**
 	 * if {@link #isTuple()} then<br>
 	 * return this as {@link PyTuple}<br>
 	 * else throw {@link PyTypeMismatchException}
 	 * */
-	public abstract PyTuple checkTuple();
+	public PyTuple checkTuple() {
+		throw new PyTypeMismatchException( Common.expected("tuple", getType()) );
+	}
 	
 	/**
 	 * if {@link #isTuple()} then<br>
 	 * return this as {@link PyTuple}<br>
 	 * else return a tuple containing only this value
 	 * */
-	public abstract PyTuple tupleVal(); 
+	public PyTuple tupleVal() {
+		return new PyTuple(this);
+	}
 	
 	//list
 	/**
@@ -268,14 +280,25 @@ public abstract class PyVal {
 	 * 
 	 * @see #isIndexable()
 	 * */
-	public abstract boolean isList();
+	public boolean isList() {
+		return false;
+	}
 	
 	/**
 	 * if {@link #isList()} then <br>
 	 * return as {@link PyList}<br> 
 	 * else throw {@link PyTypeMismatchException}
 	 * */
-	public abstract PyList checkList();
+	public PyList checkList() {
+		throw new PyTypeMismatchException( Common.expected("list", getType()) );
+	}
+	
+	/**
+	 * Returns equivilant of list( value )
+	 * */
+	public PyList toList() {
+		return new PyList(this);
+	}
 	
 	/**
 	 * if {@link #isTuple()} or {@link #isList()}<br>

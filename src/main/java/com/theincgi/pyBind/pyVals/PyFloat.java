@@ -53,4 +53,20 @@ public class PyFloat extends PyVal {
 	public boolean isFloat() {
 		return true;
 	}
+	
+	@Override
+	public PyFloat checkDouble() {
+		return this;
+	}
+	
+	@Override
+	public PyFloat floatVal() {
+		return this;
+	}
+	
+	@Override
+	public PyFloat floatVal(double defValue) {
+		return this;
+	}
+	
 }

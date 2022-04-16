@@ -22,4 +22,21 @@ public class PyTuple extends PyVal {
 			out.add(v.toStr());
 		return out.toString();
 	}
+	
+	@Override
+	public boolean isTuple() {
+		return true;
+	}
+	
+	@Override
+	public PyTuple checkTuple() {
+		return this;
+	}
+	
+	@Override
+	public PyTuple tupleVal() {
+		return this;
+	}
+	
+	
 }

@@ -69,4 +69,20 @@ public class PyInt extends PyVal {
 	public double toDouble(double defValue) {
 		return value;
 	}
+	
+	@Override
+	public PyFloat checkDouble() {
+		return new PyFloat(value);
+	}
+	
+	@Override
+	public PyFloat floatVal() {
+		return new PyFloat(value);
+	}
+	
+	@Override
+	public PyFloat floatVal(double defValue) {
+		return floatVal();
+	}
+	
 }
