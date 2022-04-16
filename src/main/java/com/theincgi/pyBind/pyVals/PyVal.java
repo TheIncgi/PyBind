@@ -25,9 +25,13 @@ public abstract class PyVal {
 	public PyVal() {
 	}
 	
-	public abstract PyVal call(Object... values);
+	public PyVal call(Object... values)  {
+		throw new PyBindException("Attempt to call "+getType());
+	}
 	
-	public abstract PyVal invoke(Object... values);
+	public PyVal invoke(Object... values) {
+		throw new PyBindException("Attempt to invoke "+getType());
+	}
 	
 	/**
 	 * shortcut of call
@@ -52,7 +56,9 @@ public abstract class PyVal {
 	/**
 	 * Returns true if this value is NoneType
 	 * */
-	public abstract boolean isNone();
+	public boolean isNone() {
+		return false;
+	}
 	
 	/**
 	 * Returns true if this is a reference to something in<br>
@@ -67,14 +73,16 @@ public abstract class PyVal {
 	 * Returns true if using {@link #call(Object...)} or {@link #invoke(Object...)}<br>
 	 * on this value will not cause a type error
 	 * */
-	public abstract boolean isFunc();
+	public boolean isFunc() {
+		return false;
+	}
 	
 	/**
 	 * Throw an error if this value is not a function<br>
 	 * else return as PyFunc
 	 * */
 	public PyFunc checkFunction() {
-		throw new PyTypeMismatchException(expected("int", getType()));
+		throw new PyTypeMismatchException(Common.expected("function", getType()));
 	}
 	
 	//int
@@ -82,12 +90,16 @@ public abstract class PyVal {
 	 * Result of python's <code>int( val )</code><br>
 	 * if it can't convert {@link PyTypeMismatchException} is thrown
 	 * */
-	public abstract int toInt();
+	public int toInt() {
+		throw new PyTypeMismatchException("Could not convert %s to int".formatted(getType()));
+	}
 	/**
 	 * Result of python's <code>int( val )</code><br>
 	 * if it can't convert {@link PyTypeMismatchException} is thrown
 	 * */
-	public abstract int toInt(int defValue);
+	public int toInt(int defValue) {
+		return defValue;
+	}
 	
 	/**
 	 * Returns true if type is 'int'<br>
@@ -106,7 +118,7 @@ public abstract class PyVal {
 	 * @see #intVal
 	 * */
 	public PyInt checkInt() {
-		throw new PyTypeMismatchException(expected("int", getType()));
+		throw new PyTypeMismatchException( Common.expected("int", getType()) );
 	}
 	
 	/**
@@ -116,7 +128,9 @@ public abstract class PyVal {
 	 * <br>
 	 * @see #checkInt()
 	 * */
-	public abstract PyInt intVal();
+	public PyInt intVal() {
+		throw new PyTypeMismatchException( Common.expected("int", getType()) );
+	}
 	
 	/**
 	 * If this value can be converted with <code>int( value )</code> then<br>
@@ -126,7 +140,9 @@ public abstract class PyVal {
 	 * @param defValue default value to use if conversion is invalid
 	 * @see #checkInt()
 	 * */
-	public abstract PyInt intVal( int defValue );
+	public PyInt intVal( int defValue ) {
+		return PyInt.valueOf(defValue);
+	}
 	
 	
 	/**
@@ -137,7 +153,7 @@ public abstract class PyVal {
 	 * */
 	@Override
 	public String toString() {
-		return "class <%s>%S %s".formatted(getType(), isRef()?" [REF]":"[COPY]", toJString());
+		return "class <%s>%S %s".formatted(getType(), isRef()?" [REF]":"[COPY]", toStr());
 	}
 	
 	/**
@@ -157,12 +173,16 @@ public abstract class PyVal {
 	 * return value as {@link PyStr}
 	 * else throw {@link PyTypeMismatchException}
 	 * */
-	public abstract PyStr checkPyStr();
+	public PyStr checkPyStr() {
+		throw new PyTypeMismatchException( Common.expected("str", getType()) );
+	}
 	
 	/**
 	 * returns this value as a {@link PyStr} using {@link #toStr()}
 	 * */
-	public abstract PyStr strVal();
+	public PyStr strVal() {
+		return new PyStr(toStr());
+	}
 	
 	//float
 	/**
@@ -172,7 +192,9 @@ public abstract class PyVal {
 	 * <br>
 	 * <b>Note</b>Python float is equivilant to a java double
 	 * */
-	public abstract double toDouble();
+	public double toDouble() {
+		throw new PyTypeMismatchException( Common.expected("float", getType()) );
+	}
 	/**
 	 * if float( value ) is valid then<br>
 	 * returns this value as a java double<br>
@@ -180,7 +202,9 @@ public abstract class PyVal {
 	 * <br>
 	 * <b>Note</b>Python float is equivalent to a java double
 	 * */
-	public double toDouble(double defValue);
+	public double toDouble(double defValue) {
+		return defValue;
+	}
 	/**
 	 * Python float is 8 bytes, use {@link #toDouble()} instead<br>
 	 * this method will throw a {@link RuntimeException}
@@ -194,7 +218,9 @@ public abstract class PyVal {
 	 * (java double equivalent)
 	 * @see #isNum()
 	 * */
-	public abstract boolean isFloat();
+	public boolean isFloat() {
+		return false;
+	}
 	
 	/**
 	 * If {@link #isFloat()} or {@link #isInt()} then<br>
@@ -221,15 +247,13 @@ public abstract class PyVal {
 	/**
 	 * Return true if this is a tuple
 	 * */
-	public boolean isTuple() {
-		return false;
-	}
+	public abstract boolean isTuple();
 	/**
 	 * if {@link #isTuple()} then<br>
 	 * return this as {@link PyTuple}<br>
 	 * else throw {@link PyTypeMismatchException}
 	 * */
-	public PyTuple checkTuple();
+	public abstract PyTuple checkTuple();
 	
 	/**
 	 * if {@link #isTuple()} then<br>
@@ -307,9 +331,7 @@ public abstract class PyVal {
 	 * return an attribute from an object (. operator)<br>
 	 * may through {@link PyBindException} if it is not valid for this type 
 	 * */
-	public PyVal attrib(String name) {
-		throw new PyBindException("Attempt to get an attribute ( ."+name+" ) from type '"+getType()+"'");
-	}
+	public abstract PyVal attrib(String name);
 	
 	/**
 	 * this[a]<br>
@@ -373,11 +395,11 @@ public abstract class PyVal {
 	public final static PyVal toPyVal( String s ) {
 		return new PyStr( s );
 	}
-	public static PyVal toPyVal( Object obj ) {
-		if( obj instanceof String s ) {
-			
-		}
-	}
+//	public static PyVal toPyVal( Object obj ) {
+//		if( obj instanceof String s ) {
+//			
+//		}
+//	}
 
 	
 	

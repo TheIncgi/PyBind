@@ -9,16 +9,6 @@ public class PyNone extends PyVal {
 	}
 	
 	@Override
-	public PyVal call(Object... values)  {
-		throw new PyBindException("Attempt to call "+getType());
-	}
-	
-	@Override
-	public PyVal invoke(Object... values) {
-		throw new PyBindException("Attempt to invoke "+getType());
-	}
-	
-	@Override
 	public String getType() {
 		return "NoneType";
 	}
@@ -28,4 +18,8 @@ public class PyNone extends PyVal {
 		return true;
 	}
 	
+	@Override
+	public String toStr() {
+		return "None";
+	}
 }

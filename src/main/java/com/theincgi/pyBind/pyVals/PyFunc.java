@@ -25,6 +25,8 @@ public class PyFunc extends PyVal {
 		return PyBind.getSocketHandler().bind(lib, name).checkFunction();
 	}
 	
+	
+	
 	@Override
 	public PyVal call(Object... values) {
 		return PyBind.getSocketHandler().send(CALL, COPY, values).orElse(PyVal.NONE);
@@ -35,9 +37,23 @@ public class PyFunc extends PyVal {
 		return PyBind.getSocketHandler().send(CALL, REF, values).orElse(PyVal.NONE);
 	}
 	
+	@Override
+	public String getType() {
+		return "function";
+	}
+	
+	@Override
+	public boolean isFunc() {
+		return true;
+	}
 	
 	@Override
 	public PyFunc checkFunction() {
 		return this;
+	}
+	
+	@Override
+	public String toStr() {
+		return "<function>";
 	}
 }

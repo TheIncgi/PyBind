@@ -3,6 +3,8 @@ package com.theincgi.pyBind.pyVals;
 import java.util.Objects;
 import java.util.WeakHashMap;
 
+import com.theincgi.pyBind.PyBindException;
+
 public class PyInt extends PyVal {
 	private final int value;
 	
@@ -19,8 +21,8 @@ public class PyInt extends PyVal {
 	}
 	
 	@Override
-	public boolean isInt() {
-		return true;
+	public String getType() {
+		return "int";
 	}
 	
 	@Override
@@ -29,50 +31,42 @@ public class PyInt extends PyVal {
 	}
 	
 	@Override
-	public String getType() {
-		return "int";
+	public int toInt(int defValue) {
+		return value;
 	}
 	
 	@Override
-	public String toJString() {
-		return value+"";
-	}
-	
-	@Override
-	public PyFloat checkDouble() {
-		return new PyFloat(value);
-	}
-	
-	@Override
-	public boolean isDouble() {
+	public boolean isInt() {
 		return true;
 	}
+	
 	@Override
 	public PyInt checkInt() {
 		return this;
 	}
 	
 	@Override
+	public PyInt intVal() {
+		return this;
+	}
+	
+	@Override
+	public PyInt intVal(int defValue) {
+		return this;
+	}
+	
+	@Override
+	public String toStr() {
+		return Integer.toString(value);
+	}
+	
+	@Override
 	public double toDouble() {
 		return value;
 	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(value);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		PyInt other = (PyInt) obj;
-		return value == other.value;
-	}
 	
-	
+	@Override
+	public double toDouble(double defValue) {
+		return value;
+	}
 }

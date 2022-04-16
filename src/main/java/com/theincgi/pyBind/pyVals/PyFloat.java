@@ -1,5 +1,7 @@
 package com.theincgi.pyBind.pyVals;
 
+import com.theincgi.pyBind.PyBindException;
+
 public class PyFloat extends PyVal {
 	private final double value;
 	
@@ -8,27 +10,47 @@ public class PyFloat extends PyVal {
 	}
 	
 	@Override
-	public PyFloat checkDouble() {
-		return this;
+	public String getType() {
+		return "float";
 	}
 	
 	@Override
-	public boolean isDouble() {
-		return true;
+	public int toInt() {
+		return (int) value;
 	}
 	
 	@Override
-	public String toJString() {
+	public int toInt(int defValue) {
+		return (int) value;
+	}
+	
+	@Override
+	public PyInt intVal() {
+		return PyInt.valueOf((int)value);
+	}
+	
+	@Override
+	public PyInt intVal(int defValue) {
+		return intVal();
+	}
+	
+	@Override
+	public String toStr() {
 		return Double.toString(value);
 	}
 	
 	@Override
-	public PyInt checkInt() {
-		return PyInt.valueOf((int) value);
+	public double toDouble() {
+		return value;
 	}
 	
 	@Override
-	public String getType() {
-		return "float";
+	public double toDouble(double defValue) {
+		return value;
+	}
+	
+	@Override
+	public boolean isFloat() {
+		return true;
 	}
 }

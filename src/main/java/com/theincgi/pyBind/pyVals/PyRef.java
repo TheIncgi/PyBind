@@ -70,9 +70,9 @@ public class PyRef extends PyVal {
 	}
 
 	@Override
-	public String toJString() {
+	public String toStr() {
 		checkRef();
-		return evaluated.toJString();
+		return evaluated.toStr();
 	}
 
 	@Override
