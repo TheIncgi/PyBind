@@ -5,6 +5,7 @@ import static com.theincgi.pyBind.Common.expected;
 import java.util.LinkedHashMap;
 import java.util.Optional;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.theincgi.pyBind.Common;
@@ -25,26 +26,64 @@ public abstract class PyVal {
 	public PyVal() {
 	}
 	
-	public PyVal call(Object... values)  {
+	public PyVal call(JSONArray args)  {
+		throw new PyBindException("Attempt to call "+getType());
+	}
+	public PyVal call(JSONObject kwargs)  {
+		throw new PyBindException("Attempt to call "+getType());
+	}
+	public PyVal call(JSONArray args, JSONObject kwargs)  {
 		throw new PyBindException("Attempt to call "+getType());
 	}
 	
-	public PyVal invoke(Object... values) {
+	public PyVal invoke(JSONArray args) {
+		throw new PyBindException("Attempt to invoke "+getType());
+	}
+	public PyVal invoke(JSONObject kwargs) {
+		throw new PyBindException("Attempt to invoke "+getType());
+	}
+	public PyVal invoke(JSONArray args, JSONObject kwargs) {
 		throw new PyBindException("Attempt to invoke "+getType());
 	}
 	
 	/**
 	 * shortcut of call
 	 */
-	public final PyVal c(Object...values) {
-		return call(values);
+	public PyVal c(JSONArray args)  {
+		return call(args);
+	}
+	/**
+	 * shortcut of call
+	 */
+	public PyVal c(JSONObject kwargs)  {
+		return call(kwargs);
+	}
+	/**
+	 * shortcut of call
+	 */
+	public PyVal c(JSONArray args, JSONObject kwargs)  {
+		return call(args, kwargs);
+	}
+	
+	/**
+	 * shortcut of invoke
+	 */
+	public PyVal i(JSONArray args) {
+		return invoke(args);
 	}
 	/**
 	 * shortcut of invoke
 	 */
-	public final PyVal i(Object...values) {
-		return invoke(values);
+	public PyVal i(JSONObject kwargs) {
+		return invoke(kwargs);
 	}
+	/**
+	 * shortcut of invoke
+	 */
+	public PyVal i(JSONArray args, JSONObject kwargs) {
+		return invoke(args, kwargs);
+	}
+	
 	
 	/**
 	 * Returns the type name of this value as described in<br>

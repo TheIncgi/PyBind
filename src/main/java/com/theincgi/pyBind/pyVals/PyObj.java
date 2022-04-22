@@ -6,23 +6,35 @@ import static com.theincgi.pyBind.PyBindSockerHandler.ResultMode.COPY;
 import static com.theincgi.pyBind.PyBindSockerHandler.ResultMode.REF;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.concurrent.ExecutionException;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import com.theincgi.pyBind.NotImplementedException;
 import com.theincgi.pyBind.PyBind;
 
 public class PyObj extends PyVal {
 	private String refUUID;
+	
 	public PyObj(String ref) {
 		refUUID = ref;
 	}
 	
-	private PyFunc(String refUUID) {
-		this.refUUID = refUUID;
-	}
 	
 	@Override
+	public PyVal call(JSONArray args) {
+		return PyBind.getSocketHandler().send(CALL, COPY, args).orElse(PyVal.NONE);
+	}
+	@Override
+	public PyVal call(JSONObject kwargs) {
+	}
+	@Override
+	public PyVal call(JSONArray args, JSONObject kwargs) {
+	}
+	@Override
 	public PyVal call(Object... values) {
-		return PyBind.getSocketHandler().send(CALL, COPY, values).orElse(PyVal.NONE);
 	}
 	
 	@Override
@@ -104,6 +116,11 @@ public class PyObj extends PyVal {
 	}
 	
 	@Override
+	public boolean isStr() {
+		return eval("isinstance($1, str)", this).checkBool().toBool();
+	}
+	
+	@Override
 	public double toDouble() {
 		return eval("float($1)", this).checkDouble().toDouble();
 	}
@@ -143,8 +160,97 @@ public class PyObj extends PyVal {
 	
 	@Override
 	public PyTuple checkTuple() {
-		if(isTuple())
-			return this;
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public PyTuple tupleVal() {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public boolean isList() {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public PyList checkList() {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public PyList toList() {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public PyVal[] toArray() {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public boolean isIndexable() {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public boolean toBool() {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public PyBool checkBool() {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public PyBool boolVal() {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public int len() {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public PyVal attrib(String name) {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public PyVal index(int a) {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public PyVal index(Integer a, Integer b) {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public boolean isDict() {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public LinkedHashMap<PyVal, PyVal> toMap() {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public boolean isPyGen() {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public PyVal next() {
+		throw new NotImplementedException();
+	}
+	
+	@Override
+	public Object asJsonValue() {
+		throw new NotImplementedException();
 	}
 	
 }

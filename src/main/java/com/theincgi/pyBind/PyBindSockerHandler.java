@@ -10,6 +10,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.theincgi.pyBind.pyVals.PyRef;
@@ -34,10 +36,51 @@ public class PyBindSockerHandler {
 		return future;
 	}
 	
-	public JSONObject send(Actions action, ResultMode mode,  JSONObject info) {
+	public JSONObject send(Actions action, ResultMode mode,  JSONObject info) throws JSONException, InterruptedException, ExecutionException, IOException {
 		info.put("op", action.name());
 		info.put("mode", mode.name());
 		return new JSONObject(send(info).get());
+	}
+	
+	
+	public PyVal call(JSONArray args) throws JSONException, InterruptedException, ExecutionException, IOException {
+		JSONObject info = new JSONObject();
+		info.put("args", info);
+		JSONObject result = send(Actions.CALL, ResultMode.COPY, info);
+		return PyVal.fromJson(result);
+	}
+	public PyVal call(JSONObject kwargs) throws JSONException, InterruptedException, ExecutionException, IOException {
+		JSONObject info = new JSONObject();
+		info.put("kwargs", info);
+		JSONObject result = send(Actions.CALL, ResultMode.COPY, info);
+		return PyVal.fromJson(result);
+	}
+	public PyVal call(JSONArray args, JSONObject kwargs) throws JSONException, InterruptedException, ExecutionException, IOException {
+		JSONObject info = new JSONObject();
+		info.put("args", args);
+		info.put("kwargs", kwargs);
+		JSONObject result = send(Actions.CALL, ResultMode.COPY, info);
+		return PyVal.fromJson(result);
+	}
+	
+	public PyVal invoke(JSONArray args) throws JSONException, InterruptedException, ExecutionException, IOException {
+		JSONObject info = new JSONObject();
+		info.put("args", info);
+		JSONObject result = send(Actions.CALL, ResultMode.REF, info);
+		return PyVal.fromJson(result);
+	}
+	public PyVal invoke(JSONObject kwargs) throws JSONException, InterruptedException, ExecutionException, IOException {
+		JSONObject info = new JSONObject();
+		info.put("kwargs", info);
+		JSONObject result = send(Actions.CALL, ResultMode.REF, info);
+		return PyVal.fromJson(result);
+	}
+	public PyVal invoke(JSONArray args, JSONObject kwargs) throws JSONException, InterruptedException, ExecutionException, IOException {
+		JSONObject info = new JSONObject();
+		info.put("args", args);
+		info.put("kwargs", kwargs);
+		JSONObject result = send(Actions.CALL, ResultMode.REF, info);
+		return PyVal.fromJson(result);
 	}
 	
 	public PyVal bind(String lib, String name) throws InterruptedException, ExecutionException, IOException {
