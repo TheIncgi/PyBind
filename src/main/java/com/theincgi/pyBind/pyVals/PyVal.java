@@ -9,6 +9,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.theincgi.pyBind.Common;
+import com.theincgi.pyBind.PyBind;
 import com.theincgi.pyBind.PyBindException;
 import com.theincgi.pyBind.PyTypeMismatchException;
 
@@ -49,38 +50,38 @@ public abstract class PyVal {
 	/**
 	 * shortcut of call
 	 */
-	public PyVal c(JSONArray args)  {
+	public final PyVal c(JSONArray args)  {
 		return call(args);
 	}
 	/**
 	 * shortcut of call
 	 */
-	public PyVal c(JSONObject kwargs)  {
+	public final PyVal c(JSONObject kwargs)  {
 		return call(kwargs);
 	}
 	/**
 	 * shortcut of call
 	 */
-	public PyVal c(JSONArray args, JSONObject kwargs)  {
+	public final PyVal c(JSONArray args, JSONObject kwargs)  {
 		return call(args, kwargs);
 	}
 	
 	/**
 	 * shortcut of invoke
 	 */
-	public PyVal i(JSONArray args) {
+	public final PyVal i(JSONArray args) {
 		return invoke(args);
 	}
 	/**
 	 * shortcut of invoke
 	 */
-	public PyVal i(JSONObject kwargs) {
+	public final  PyVal i(JSONObject kwargs) {
 		return invoke(kwargs);
 	}
 	/**
 	 * shortcut of invoke
 	 */
-	public PyVal i(JSONArray args, JSONObject kwargs) {
+	public final PyVal i(JSONArray args, JSONObject kwargs) {
 		return invoke(args, kwargs);
 	}
 	
@@ -208,7 +209,9 @@ public abstract class PyVal {
 	/**
 	 * Returns true if value type is string.
 	 * */
-	public abstract boolean isStr();
+	public boolean isStr() {
+		return false;
+	}
 	
 	/**
 	 * if {@link #isStr()} then<br>
@@ -409,25 +412,33 @@ public abstract class PyVal {
 	 * return an attribute from an object (. operator)<br>
 	 * may through {@link PyBindException} if it is not valid for this type 
 	 * */
-	public abstract PyVal attrib(String name);
+	public PyVal attrib(String name) {
+		PyBind.getSocketHandler().
+	}
 	
 	/**
 	 * this[a]<br>
 	 * may through {@link PyBindException} if it is not valid for this type
 	 * */
-	public abstract PyVal index(int a);
+	public PyVal index(int a) {
+		throw new PyTypeMismatchException( Common.expected("list or tuple", getType()) );
+	}
 
 	/**
 	 * this[a:b]<br>
 	 * may through {@link PyBindException} if it is not valid for this type<br>
 	 * <b>a and b are both nullable</b>
 	 * */
-	public abstract PyVal index(Integer a, Integer b);
+	public PyVal index(Integer a, Integer b) {
+		throw new PyTypeMismatchException( Common.expected("list or tuple", getType()) );
+	}
 	
 	/**
 	 * return true if this is a dictionary
 	 * */
-	public abstract boolean isDict();
+	public boolean isDict() {
+		return false;
+	}
 	
 	/**
 	 * For dictionaries, key value pairs are extracted<br>
@@ -438,12 +449,16 @@ public abstract class PyVal {
 	/**
 	 * Return true if this is a generator
 	 * */
-	public abstract boolean isPyGen();
+	public boolean isPyGen() {
+		return false;
+	}
 	
 	/**
 	 * for generators, gets the next value
 	 * */
-	public abstract PyVal next();
+	public PyVal next() {
+		throw new PyTypeMismatchException( Common.expected("generator", getType()) );
+	}
 	
 	public abstract Object asJsonValue();
 	

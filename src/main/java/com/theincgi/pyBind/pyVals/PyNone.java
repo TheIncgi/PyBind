@@ -27,4 +27,5 @@ public class PyNone extends PyVal {
 	public boolean toBool() {
 		return false;
 	}
+	
 }

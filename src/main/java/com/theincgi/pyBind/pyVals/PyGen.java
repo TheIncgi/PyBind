@@ -2,6 +2,7 @@ package com.theincgi.pyBind.pyVals;
 
 import java.util.LinkedHashMap;
 
+import com.theincgi.pyBind.NotImplementedException;
 import com.theincgi.pyBind.PyBindException;
 
 
@@ -32,6 +33,16 @@ public class PyGen extends PyVal {
 	@Override
 	public String toStr() {
 		return "<generator>";
+	}
+	
+	@Override
+	public boolean isPyGen() {
+		return true;
+	}
+	
+	@Override
+	public PyVal next() {
+		throw new NotImplementedException();
 	}
 	
 }

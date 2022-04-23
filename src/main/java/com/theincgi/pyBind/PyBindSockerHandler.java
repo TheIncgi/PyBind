@@ -18,22 +18,56 @@ import com.theincgi.pyBind.pyVals.PyRef;
 import com.theincgi.pyBind.pyVals.PyVal;
 
 public class PyBindSockerHandler {
-	private Socket socket;
+	private JSONSocket socket;
 	private long msgID = 0;
-	HashMap<Long, FutureResponse<String>> responses = new HashMap<>();
+	HashMap<Long, FutureResponse<JSONObject>> responses = new HashMap<>();
 	
-	public PyBindSockerHandler(Socket socket) {
-		this.socket = socket;
+	public PyBindSockerHandler(Socket socket) throws IOException {
+		this.socket = new JSONSocket(socket);
+		
+		Thread requestHandler = new Thread(this::handleRequests);
+		requestHandler.setDaemon(true);
+		requestHandler.start();
 	}
 	
-	private synchronized Future<String> send(JSONObject json) throws IOException {
+	private synchronized Future<JSONObject> send(JSONObject json) throws IOException {
 		long id = msgID++;
 		json.put("id", id);
-		var future = new FutureResponse<String>();
+		FutureResponse<JSONObject> future = new FutureResponse<>();
 		responses.put(id, future);
-		socket.getOutputStream().write(json.toString().getBytes());
-		socket.getOutputStream().flush();
+		socket.write(json);
 		return future;
+	}
+	
+	private void handleRequests() {
+		try {
+			while(true) {
+				if( socket.hasJSON() ) {
+					JSONObject obj = socket.readJSON();
+					if(obj.has("id")) {
+						FutureResponse<JSONObject> resp = responses.get(obj.getLong("id"));
+						resp.setResult( obj.getJSONObject("value") );
+						
+					}else{
+						String op = obj.getString("op");
+						switch(op) {
+							
+							default:
+								throw new RuntimeException("Unhandled op '"+op+"'");
+						}
+					}
+				}else{
+					if(responses.size() > 0) {
+						try {
+							Thread.sleep(1);
+						} catch (InterruptedException e) {}
+					}
+				}
+			}
+		} catch (JSONException | IOException e) {
+			e.printStackTrace();
+		}
+		throw new RuntimeException("Main request proccessing loop has ended");
 	}
 	
 	public JSONObject send(Actions action, ResultMode mode,  JSONObject info) throws JSONException, InterruptedException, ExecutionException, IOException {
@@ -166,7 +200,8 @@ public class PyBindSockerHandler {
 		SET, //ref
 		CALL,
 		EXEC,
-		EVAL;
+		EVAL,
+		ERR;
 	}
 	public enum ResultMode {
 		COPY,

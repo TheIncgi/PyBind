@@ -184,6 +184,8 @@ public class PyBind implements AutoCloseable, Closeable{
 	}
 	
 	public static void exec(String python) {
+		JSONObject obj = new JSONObject();
+		obj.put("py", python);
 		socketHandler.send(EXEC, IGNORE, python);
 	}
 	public static PyVal eval(String python, PyVal...args) {

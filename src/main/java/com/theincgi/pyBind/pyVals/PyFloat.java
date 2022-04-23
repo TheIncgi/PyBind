@@ -1,9 +1,11 @@
 package com.theincgi.pyBind.pyVals;
 
+import org.json.JSONObject;
+
 import com.theincgi.pyBind.PyBindException;
 
 public class PyFloat extends PyVal {
-	private final double value;
+	protected final double value;
 	
 	public PyFloat(double d) {
 		value = d;
@@ -74,4 +76,11 @@ public class PyFloat extends PyVal {
 		return value != 0;
 	}
 	
+	@Override
+	public Object asJsonValue() {
+		JSONObject obj = new JSONObject();
+		obj.put("type", getType());
+		obj.put("value", value);
+		return obj;
+	}
 }

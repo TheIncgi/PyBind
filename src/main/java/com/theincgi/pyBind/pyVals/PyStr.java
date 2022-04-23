@@ -44,6 +44,11 @@ public class PyStr extends PyVal {
 	}
 	
 	@Override
+	public boolean isStr() {
+		return true;
+	}
+	
+	@Override
 	public PyStr checkPyStr() {
 		return this;
 	}

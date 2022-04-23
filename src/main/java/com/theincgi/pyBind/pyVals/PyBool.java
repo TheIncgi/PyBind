@@ -1,17 +1,12 @@
 package com.theincgi.pyBind.pyVals;
 
-import java.util.LinkedHashMap;
+import org.json.JSONObject;
 
-import com.theincgi.pyBind.Common;
-import com.theincgi.pyBind.PyBindException;
-import com.theincgi.pyBind.PyTypeMismatchException;
-
-public class PyBool extends PyVal {
-	private final boolean value;
+public class PyBool extends PyFloat {
 	public static PyBool TRUE = new PyBool(true), FALSE = new PyBool(false);
 	
 	private PyBool(boolean value) {
-		this.value = value;
+		super(value ? 1.0 : 0.0);
 	}
 
 	@Override
@@ -21,17 +16,17 @@ public class PyBool extends PyVal {
 	
 	@Override
 	public int toInt() {
-		return value ? 1 : 0;
+		return (int) value;
 	}
 	
 	@Override
 	public int toInt(int defValue) {
-		return value ? 1 : 0;
+		return (int) value;
 	}
 	
 	@Override
 	public PyInt intVal() {
-		return PyInt.valueOf( value ? 1 : 0 );
+		return PyInt.valueOf( (int) value );
 	}
 	
 	@Override
@@ -41,21 +36,16 @@ public class PyBool extends PyVal {
 	
 	@Override
 	public String toStr() {
-		return value ? "True" : "False";
+		return toBool() ? "True" : "False";
 	}
 	
 	@Override
 	public double toDouble() {
-		return value ? 1 : 0;
+		return value;
 	}
 	
 	@Override
 	public double toDouble(double defValue) {
-		return value ? 1 : 0;
-	}
-	
-	@Override
-	public boolean toBool() {
 		return value;
 	}
 	
@@ -67,5 +57,13 @@ public class PyBool extends PyVal {
 	@Override
 	public PyBool checkBool() {
 		return this;
+	}
+	
+	@Override
+	public Object asJsonValue() {
+		JSONObject obj = new JSONObject();
+		obj.put("type", getType());
+		obj.put("value", toBool());
+		return obj;
 	}
 }
