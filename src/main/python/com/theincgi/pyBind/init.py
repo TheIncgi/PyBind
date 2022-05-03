@@ -1,6 +1,6 @@
 import asyncio
 import subprocess
-from sys import argv
+from sys import argv, stderr
 import socket
 import socketserver
 from JsonSocket import JsonSocket
@@ -52,6 +52,7 @@ def runMessageHandler():
 
 def main(port: int):
     print("Connecting to java on port %d" % (port,))
+    print("This is an error check",file=stderr)
     connectToJava(port)
 
 
