@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.theincgi.pyBind.PyBindSockerHandler.Actions;
@@ -39,9 +40,9 @@ import com.theincgi.pyBind.pyVals.PyVal;
 
 public class PyBind implements AutoCloseable, Closeable{
 	
-	private static PyBindings pyBinds;
-	private static PyBindSockerHandler socketHandler;
-	private static Process pyProcess;
+	private static ThreadLocal<PyBindings> pyBinds = new ThreadLocal<>();
+	private static ThreadLocal<PyBindSockerHandler> socketHandler = new ThreadLocal<>();
+	private static ThreadLocal<Process> pyProcess = new ThreadLocal<>();
 	
 	private static File pythonCmd = Common.findOnPath("python.exe");
 	private static File pythonWorkingDir = new File(System.getProperty("user.dir"));
@@ -50,59 +51,51 @@ public class PyBind implements AutoCloseable, Closeable{
 		PyBind.pythonCmd = pythonCmd;
 	}
 	
-	public static void init() throws IOException, InterruptedException {
-		init(0); //pick a port auto
-	}
-	/**
-	 * 0 - pick port and start py<br>
-	 * other - wait for connection on port
-	 * @throws InterruptedException 
-	 * */
-	public static void init(int port) throws IOException, InterruptedException {
-		if(port == 0)
-			initJavaHost();
-		else
-			initPythonHost( port );
-		
-		pyBinds = bindPy(PyBindings.class);
-	}
-	private static void initJavaHost() throws IOException, InterruptedException {
-		final ServerSocket ss = new ServerSocket(0, 0, null);
-		final int port = ss.getLocalPort();
-		
-		var socket = Executors.newSingleThreadExecutor().submit(()->{
-			try {
-				System.out.println("Waiting for connection on port "+port);
-				return ss.accept();
-			}finally {
-				ss.close();
-			}
-		});
-		
-		
-		
-		pyProcess = launchPython(port);
-		
+	
+	private static void init() throws PyBindException {
 		try {
-			PyBind.socketHandler = new PyBindSockerHandler(socket.get(15, TimeUnit.SECONDS));
-			System.out.println("Connected!");
-		} catch (InterruptedException e) {
-			throw e;
-		} catch (ExecutionException e) {
-			throw new IOException(e);
-		} catch (TimeoutException e) {
+			if(pyProcess.get()!=null) return;
+			
+			final ServerSocket ss = new ServerSocket(0, 0, null);
+			final int port = ss.getLocalPort();
+			
+			var socket = Executors.newSingleThreadExecutor().submit(()->{
+				try {
+					System.out.println("Waiting for connection on port "+port);
+					return ss.accept();
+				}finally {
+					ss.close();
+				}
+			});
+			
+			
+			
+			pyProcess.set(launchPython(port));
+			
+			try {
+				PyBind.socketHandler.set( new PyBindSockerHandler(socket.get(15, TimeUnit.SECONDS)) );
+				System.out.println("Connected!");
+			} catch (InterruptedException e) {
+				throw e;
+			} catch (ExecutionException e) {
+				throw new IOException(e);
+			} catch (TimeoutException e) {
 //			new String(pyProcess.getInputStream().readAllBytes())
 //			new String(pyProcess.getErrorStream().readAllBytes())
-			pyProcess.destroy();
-			throw new IOException(e);
+				pyProcess.get().destroy();
+				throw new IOException(e);
+			}
+		} catch (IOException | InterruptedException e) {
+			throw new PyBindException(e);
 		}
-	}
-	private static void initPythonHost(int port) throws IOException {
-		PyBind.socketHandler = new PyBindSockerHandler(new Socket(InetAddress.getByName(null), port));
 	}
 	
 	private static Process launchPython(int port) throws IOException {
 		putScript("init.py");
+		putScript("JavaObj.py");
+		putScript("JsonSocket.py");
+		putScript("test.py");
+		putScript("basic.py");
 		ProcessBuilder pb = new ProcessBuilder(pythonCmd.getAbsolutePath(),"-u", "pyBind/init.py", port+"");
 		pb.directory(pythonWorkingDir);
 		pb.inheritIO();
@@ -124,12 +117,14 @@ public class PyBind implements AutoCloseable, Closeable{
 		System.out.println("Copied "+f);
 	}
 	
-	public static String getPyVersion() {
-		return pyBinds.getVersion();
+	public static String getPyVersion() throws PyBindException {
+		init();
+		return pyBinds.get().getVersion();
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <T> T bindPy(Class<T> cls) {
+	public static <T> T bindPy(Class<T> cls) throws PyBindException {
+		init();
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		WeakHashMap<String, PyFunc> generated = new WeakHashMap<>();
 		return (T) Proxy.newProxyInstance(cl, new Class[] {cls}, new java.lang.reflect.InvocationHandler() {
@@ -161,7 +156,7 @@ public class PyBind implements AutoCloseable, Closeable{
 						}
 					}
 					
-					JSONObject f = socketHandler.send(Actions.CALL, pyInfo.mode(), callInfo);
+					JSONObject f = socketHandler.get().send(Actions.CALL, pyInfo.mode(), callInfo);
 					
 					Class rType = method.getReturnType();
 					if(rType.equals(Void.class))
@@ -175,31 +170,63 @@ public class PyBind implements AutoCloseable, Closeable{
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static PyFunc bindPy(String lib, String name) {
-		return null;
+	public static PyFunc bindPy(String lib, String name) throws PyBindException {
+		init();
+		try {
+			return socketHandler.get().bind(lib, name).checkFunction();
+		} catch (InterruptedException | ExecutionException | IOException e) {
+			throw new PyBindException(e);
+		}
 	}
 	
-	public static PyBindSockerHandler getSocketHandler() {
-		return socketHandler;
+	public static PyBindSockerHandler getSocketHandler() throws PyBindException {
+		init();
+		return socketHandler.get();
 	}
 	
-	public static void exec(String python) {
+	public static void exec(String python) throws PyBindException {
+		init();
 		JSONObject obj = new JSONObject();
 		obj.put("py", python);
-		socketHandler.send(EXEC, IGNORE, python);
+		
+		try {
+			socketHandler.get().send(EXEC, IGNORE, obj);
+		} catch (JSONException | InterruptedException | ExecutionException | IOException e) {
+			throw new PyBindException(e);
+		}
 	}
-	public static PyVal eval(String python, PyVal...args) {
-		return socketHandler.send(EVAL, COPY, python, args);
+	public static PyVal eval(String python) throws PyBindException {
+		init();
+		JSONObject obj = new JSONObject();
+		obj.put("py", python);
+		
+		JSONObject json;
+		try {
+			json = socketHandler.get().send(EVAL, COPY, obj);
+		} catch (JSONException | InterruptedException | ExecutionException | IOException e) {
+			throw new PyBindException(e);
+		}
+		return PyVal.fromJson(json);
 	}
-	public static PyVal evalRef(String python, PyVal...args) {
-		return socketHandler.send(EVAL, REF, python, args);
+	public static PyVal evalRef(String python) throws PyBindException {
+		init();
+		JSONObject obj = new JSONObject();
+		obj.put("py", python);
+		
+		JSONObject json;
+		try {
+			json = socketHandler.get().send(EVAL, REF, obj);
+		} catch (JSONException | InterruptedException | ExecutionException | IOException e) {
+			throw new PyBindException(e);
+		}
+		return PyVal.fromJson(json);
 	}
 	
 	
 	
 	public void close() throws IOException {
-		socket.close();
-		pyProcess.destroy();
+		socketHandler.get().close();
+		pyProcess.get().destroy();
 	};
 	
 	public enum BindMethod {

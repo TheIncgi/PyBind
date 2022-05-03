@@ -37,8 +37,6 @@ public class Common {
 	
 	public static Object coerce(PyVal val, Class to, Class... listType) {
 		
-		val.eval();
-		
 		if(to.isArray()) {
 			if(val.isNone()) return null;
 			int len = val.len();
@@ -50,10 +48,10 @@ public class Common {
 		if(to.equals(List.class)) {
 			if(val.isNone()) return null;
 			Class inner = listType[0];
-			Class[] innerList = Arrays.copyOfRange(listType, 1, listType.length));
+			Class[] innerList = Arrays.copyOfRange(listType, 1, listType.length);
 			ArrayList list = new ArrayList();
 			
-			for(int i = 0; i<len; i++)
+			for(int i = 0; i<val.len(); i++)
 				list.add( coerce(val.index(i), inner, innerList) );
 			
 			return list;
@@ -61,7 +59,7 @@ public class Common {
 		if(to.equals(PyVal.class)) {
 			return val;
 		}
-		if(to.equals(int.class) {
+		if(to.equals(int.class)) {
 			if(val.isNone()) return 0;
 			return val.toInt();
 		}
@@ -98,9 +96,12 @@ public class Common {
 			return val.toStr();
 		}
 		if(Iterable.class.isAssignableFrom(to.getClass())) {
-			if(val.isNone()) return null;
+			throw new NotImplementedException("Iterable not implemented");
+//			if(val.isNone()) return null;
 			//TODO itterator of generator
 		}
+		
+		throw new NotImplementedException(to.getName()+" not implemented");
 		
 	}
 }

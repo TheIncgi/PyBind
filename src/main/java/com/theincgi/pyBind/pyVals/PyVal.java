@@ -9,6 +9,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.theincgi.pyBind.Common;
+import com.theincgi.pyBind.NotImplementedException;
 import com.theincgi.pyBind.PyBind;
 import com.theincgi.pyBind.PyBindException;
 import com.theincgi.pyBind.PyTypeMismatchException;
@@ -27,26 +28,44 @@ public abstract class PyVal {
 	public PyVal() {
 	}
 	
-	public PyVal call(JSONArray args)  {
-		throw new PyBindException("Attempt to call "+getType());
+	public final PyVal call(Object... args) {
+		JSONArray json = new JSONArray();
+		for(Object o : args) 
+			json.put( toPyVal(o).asJsonValue() );
+		return call( json );
 	}
-	public PyVal call(JSONObject kwargs)  {
-		throw new PyBindException("Attempt to call "+getType());
+	public final PyVal call(JSONArray args)  {
+		return call(args, Optional.empty());
+	}
+	public final PyVal call(JSONObject kwargs)  {
+		return call(Optional.empty(), kwargs);
 	}
 	public PyVal call(JSONArray args, JSONObject kwargs)  {
 		throw new PyBindException("Attempt to call "+getType());
 	}
 	
-	public PyVal invoke(JSONArray args) {
-		throw new PyBindException("Attempt to invoke "+getType());
+	public final PyVal invoke(Object... args) {
+		JSONArray json = new JSONArray();
+		for(Object o : args) 
+			json.put( toPyVal(o).asJsonValue() );
+		return call( json );
 	}
-	public PyVal invoke(JSONObject kwargs) {
-		throw new PyBindException("Attempt to invoke "+getType());
+	public final PyVal invoke(JSONArray args) {
+		return invoke( args, Optional.empty() );
+	}
+	public final PyVal invoke(JSONObject kwargs) {
+		return invoke( Optional.empty(), kwargs );
 	}
 	public PyVal invoke(JSONArray args, JSONObject kwargs) {
 		throw new PyBindException("Attempt to invoke "+getType());
 	}
 	
+	/**
+	 * shortcut of call
+	 */
+	public final PyVal c(Object... args)  {
+		return call(args);
+	}
 	/**
 	 * shortcut of call
 	 */
@@ -66,6 +85,12 @@ public abstract class PyVal {
 		return call(args, kwargs);
 	}
 	
+	/**
+	 * shortcut of invoke
+	 */
+	public final PyVal i(Object... args) {
+		return invoke(args);
+	}
 	/**
 	 * shortcut of invoke
 	 */
@@ -460,7 +485,7 @@ public abstract class PyVal {
 		throw new PyTypeMismatchException( Common.expected("generator", getType()) );
 	}
 	
-	public abstract Object asJsonValue();
+	public abstract JSONObject asJsonValue();
 	
 	public static PyVal fromJson(JSONObject json) {
 		//TODO DECODE JSON
@@ -479,11 +504,26 @@ public abstract class PyVal {
 	public final static PyVal toPyVal( String s ) {
 		return new PyStr( s );
 	}
-//	public static PyVal toPyVal( Object obj ) {
-//		if( obj instanceof String s ) {
-//			
-//		}
-//	}
+	
+	/**
+	 * Best py val match of obj
+	 * */
+	public static PyVal toPyVal( Object obj ) {
+		if( obj instanceof PyVal v )
+			return v;
+		if( obj instanceof String s )
+			return toPyVal( s );
+		if( obj instanceof Integer i)
+			return toPyVal(i);
+		if( obj instanceof Double d)
+			return toPyVal(d);
+		if( obj instanceof Float d)
+			return toPyVal(d);
+		if( obj instanceof Boolean b)
+			return toPyVal(b);
+		
+		throw new NotImplementedException("type conversion for " + obj.getClass().toString() + " isn't setup!");
+	}
 
 	
 	

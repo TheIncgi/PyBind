@@ -2,6 +2,9 @@ package com.theincgi.pyBind.pyVals;
 
 import java.util.LinkedHashMap;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import com.theincgi.pyBind.PyBindException;
 
 public class PyRef extends PyVal {
@@ -39,15 +42,15 @@ public class PyRef extends PyVal {
 	/////////////////////
 	
 	@Override
-	public PyVal call(Object... values) {
+	public PyVal call(JSONArray args, JSONObject kwargs) {
 		checkRef();
-		return evaluated.call(values);
+		return evaluated.call(args,kwargs);
 	}
 
 	@Override
-	public PyVal invoke(Object... values) {
+	public PyVal invoke(JSONArray args, JSONObject kwargs) {
 		checkRef();
-		return evaluated.invoke(values);
+		return evaluated.invoke(args, kwargs);
 	}
 
 	@Override
@@ -82,9 +85,9 @@ public class PyRef extends PyVal {
 	}
 
 	@Override
-	public boolean isString() {
+	public boolean isStr() {
 		checkRef();
-		return evaluated.isString();
+		return evaluated.isStr();
 	}
 
 	@Override
@@ -92,17 +95,12 @@ public class PyRef extends PyVal {
 		checkRef();
 		return evaluated.toDouble();
 	}
-
+	
+	
 	@Override
-	public boolean isDouble() {
+	public boolean isFloat() {
 		checkRef();
-		return evaluated.isDouble();
-	}
-
-	@Override
-	public boolean isNum() {
-		checkRef();
-		return evaluated.isDouble();
+		return evaluated.isFloat();
 	}
 
 	@Override
@@ -136,7 +134,7 @@ public class PyRef extends PyVal {
 	}
 
 	@Override
-	public PyVal index(int a, int b) {
+	public PyVal index(Integer a, Integer b) {
 		checkRef();
 		return evaluated.index(a, b);
 	}
@@ -175,6 +173,12 @@ public class PyRef extends PyVal {
 			super(cause);
 		}
 		
+	}
+
+	@Override
+	public JSONObject asJsonValue() {
+		checkRef();
+		return evaluated.asJsonValue();
 	}
 	
 }

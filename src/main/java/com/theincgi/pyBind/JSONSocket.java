@@ -3,6 +3,7 @@ package com.theincgi.pyBind;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -11,7 +12,7 @@ import java.net.Socket;
 
 import org.json.JSONObject;
 
-public class JSONSocket {
+public class JSONSocket implements Closeable {
 	
 	DataOutputStream out;
 	DataInputStream in;
@@ -30,10 +31,11 @@ public class JSONSocket {
 	}
 	
 	public boolean hasJSON() throws IOException {
+		if(in.available() < Integer.BYTES) return false;
 		inBuf.mark(4);
 		int msgLength = in.readInt();
-		inBuf.reset();
 		if(msgLength <= in.available()) {
+			inBuf.reset();
 			return true;
 		}else{
 			inBuf.reset();
@@ -49,5 +51,11 @@ public class JSONSocket {
 		
 		inBuf.reset();
 		return null;
+	}
+	
+	@Override
+	public void close() throws IOException {
+		out.close();
+		in.close();
 	}
 }

@@ -22,8 +22,7 @@ public class Tests {
 	@Before
 	public void init() throws IOException, InterruptedException {
 		System.out.println("Initalizing...");
-		PyBind.init(); //random port and start python
-		add = PyBind.bindPy("simple", "add");
+		add = PyBind.bindPy("basic", "add");
 		pyEx = PyBind.bindPy( PyEx.class );
 	}
 

@@ -1,5 +1,6 @@
 package com.theincgi.pyBind;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.HashMap;
@@ -17,7 +18,7 @@ import org.json.JSONObject;
 import com.theincgi.pyBind.pyVals.PyRef;
 import com.theincgi.pyBind.pyVals.PyVal;
 
-public class PyBindSockerHandler {
+public class PyBindSockerHandler implements Closeable {
 	private JSONSocket socket;
 	private long msgID = 0;
 	HashMap<Long, FutureResponse<JSONObject>> responses = new HashMap<>();
@@ -122,22 +123,25 @@ public class PyBindSockerHandler {
 		request.put("op", "BIND");
 		request.put("lib", lib);
 		request.put("name", name);
-		String resp = send(request).get();
-		JSONObject obj = new JSONObject(resp);
-		return new PyRef(obj.getString("uuid")).eval();
+		JSONObject resp = send(request).get();
+		return new PyRef(resp.getString("uuid")).eval();
 	}
 	
 	public PyVal bindGlobal(String name) throws InterruptedException, ExecutionException, IOException {
 		JSONObject request = new JSONObject();
 		request.put("op", "BIND_GLOBAL");
 		request.put("name", name);
-		String resp = send(request).get();
-		JSONObject obj = new JSONObject(resp);
-		return new PyRef(obj.getString("uuid")).eval();
+		JSONObject resp = send(request).get();
+		return new PyRef(resp.getString("uuid")).eval();
 	}
 	
 	public void unbind(String uuid) {
 		
+	}
+	
+	@Override
+	public void close() throws IOException {
+		socket.close();
 	}
 	
 	private class  FutureResponse<T> implements Future<T> {
@@ -208,4 +212,5 @@ public class PyBindSockerHandler {
 		REF,
 		IGNORE;
 	}
+	
 }
