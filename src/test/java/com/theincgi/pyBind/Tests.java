@@ -22,7 +22,7 @@ public class Tests {
 	@Before
 	public void init() throws IOException, InterruptedException {
 		System.out.println("Initalizing...");
-		add = PyBind.bindPy("basic", "add");
+		add = PyBind.bindPy("simple", "add");
 		pyEx = PyBind.bindPy( PyEx.class );
 	}
 
@@ -33,20 +33,7 @@ public class Tests {
 	
 	@Test
 	public void byField() {
-		assertEquals(112, add.c(90, 22));
-	}
-	
-	@Test
-	public void threadTest() {
-		Future<Integer> f = Executors.newSingleThreadExecutor().submit(()->{
-			return ThreadTest.sub.c(50,9).toInt();
-		});
-		try {
-			assertEquals(41, f.get().intValue());
-		} catch (InterruptedException | ExecutionException e) {
-			e.printStackTrace();
-			fail(e.toString());
-		}
+		assertEquals(112, add.c(90, 22).toInt());
 	}
 	
 	

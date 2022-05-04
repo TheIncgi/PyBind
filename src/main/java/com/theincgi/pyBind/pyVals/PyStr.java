@@ -2,9 +2,12 @@ package com.theincgi.pyBind.pyVals;
 
 import java.util.LinkedHashMap;
 
+import org.json.JSONObject;
+
 import com.theincgi.pyBind.PyBindException;
 
 public class PyStr extends PyVal {
+	public static final String TYPENAME = "str";
 	private final String value;
 	public PyStr(String str) {
 		value = str;
@@ -12,7 +15,7 @@ public class PyStr extends PyVal {
 	
 	@Override
 	public String getType() {
-		return "str";
+		return TYPENAME;
 	}
 
 	@Override
@@ -86,5 +89,13 @@ public class PyStr extends PyVal {
 	@Override
 	public int len() {
 		return value.length();
+	}
+	
+	@Override
+	public JSONObject asJsonValue() {
+		JSONObject obj = new JSONObject();
+		obj.put("type", TYPENAME);
+		obj.put("val", value);
+		return obj;
 	}
 }

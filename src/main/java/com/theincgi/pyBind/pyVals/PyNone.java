@@ -3,14 +3,14 @@ package com.theincgi.pyBind.pyVals;
 import com.theincgi.pyBind.PyBindException;
 
 public class PyNone extends PyVal {
-
+	public static final String TYPENAME = "NoneType";
 	public PyNone() {
 		super();
 	}
 	
 	@Override
 	public String getType() {
-		return "NoneType";
+		return TYPENAME;
 	}
 	
 	@Override

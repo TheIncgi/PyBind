@@ -3,6 +3,7 @@ package com.theincgi.pyBind.pyVals;
 import static com.theincgi.pyBind.Common.expected;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Optional;
 
 import org.json.JSONArray;
@@ -35,10 +36,10 @@ public abstract class PyVal {
 		return call( json );
 	}
 	public final PyVal call(JSONArray args)  {
-		return call(args, Optional.empty());
+		return call(args, new JSONObject());
 	}
 	public final PyVal call(JSONObject kwargs)  {
-		return call(Optional.empty(), kwargs);
+		return call(new JSONArray(), kwargs);
 	}
 	public PyVal call(JSONArray args, JSONObject kwargs)  {
 		throw new PyBindException("Attempt to call "+getType());
@@ -51,10 +52,10 @@ public abstract class PyVal {
 		return call( json );
 	}
 	public final PyVal invoke(JSONArray args) {
-		return invoke( args, Optional.empty() );
+		return invoke( args, new JSONObject() );
 	}
 	public final PyVal invoke(JSONObject kwargs) {
-		return invoke( Optional.empty(), kwargs );
+		return invoke( new JSONArray(), kwargs );
 	}
 	public PyVal invoke(JSONArray args, JSONObject kwargs) {
 		throw new PyBindException("Attempt to invoke "+getType());
@@ -114,6 +115,7 @@ public abstract class PyVal {
 	/**
 	 * Returns the type name of this value as described in<br>
 	 * python's <code>type</code> function (without "class" or brackets)<br>
+	 * same as <code>type( x ).__name__</code><br>
 	 * Ex: NoneType
 	 * */
 	public abstract String getType();
@@ -150,7 +152,7 @@ public abstract class PyVal {
 	 * else return as PyFunc
 	 * */
 	public PyFunc checkFunction() {
-		throw new PyTypeMismatchException(Common.expected("function", getType()));
+		throw new PyTypeMismatchException(Common.expected(PyFunc.TYPENAME, getType()));
 	}
 	
 	//int
@@ -186,7 +188,7 @@ public abstract class PyVal {
 	 * @see #intVal
 	 * */
 	public PyInt checkInt() {
-		throw new PyTypeMismatchException( Common.expected("int", getType()) );
+		throw new PyTypeMismatchException( Common.expected(PyInt.TYPENAME, getType()) );
 	}
 	
 	/**
@@ -197,7 +199,7 @@ public abstract class PyVal {
 	 * @see #checkInt()
 	 * */
 	public PyInt intVal() {
-		throw new PyTypeMismatchException( Common.expected("int", getType()) );
+		throw new PyTypeMismatchException( Common.expected(PyInt.TYPENAME, getType()) );
 	}
 	
 	/**
@@ -438,7 +440,7 @@ public abstract class PyVal {
 	 * may through {@link PyBindException} if it is not valid for this type 
 	 * */
 	public PyVal attrib(String name) {
-		PyBind.getSocketHandler().
+		return PyBind.getSocketHandler().attrib(this, name);
 	}
 	
 	/**
@@ -465,6 +467,18 @@ public abstract class PyVal {
 		return false;
 	}
 	
+	public PyDict checkDict() {
+		throw new PyTypeMismatchException( Common.expected(PyDict.TYPENAME, getType()) );
+	}
+	
+	
+	public PyVal index(String str) {
+		throw new PyTypeMismatchException( Common.expected("dict", getType()) );
+	}
+	public PyVal index(PyRef r) {
+		throw new PyTypeMismatchException( Common.expected("list, dict or tuple", getType()) );		
+	}
+	
 	/**
 	 * For dictionaries, key value pairs are extracted<br>
 	 * For objects, attribute key value pairs are extracted
@@ -489,6 +503,47 @@ public abstract class PyVal {
 	
 	public static PyVal fromJson(JSONObject json) {
 		//TODO DECODE JSON
+		String           type = json.getString("type");
+		String            val = json.optString("val");
+		long              ref = json.optLong("ref",-1);
+		
+		switch( type ) {
+			case PyBool.TYPENAME:
+				return PyBool.toPyVal( val.equals("True"));
+			
+			case PyFloat.TYPENAME:
+				return new PyFloat( Double.parseDouble(val) );
+
+			case PyFunc.TYPENAME:
+				return new PyFunc( ref );
+				
+			case PyInt.TYPENAME:
+				return PyInt.valueOf( Integer.parseInt(val) );
+				
+			case PyStr.TYPENAME:
+				return new PyStr(val);
+				
+			case PyNone.TYPENAME:
+				return NONE;
+			
+				
+			case PyList.TYPENAME:
+				return new PyList( json.getJSONArray("val") );
+				
+			case PyTuple.TYPENAME:
+			
+			case PyGen.TYPENAME:
+			case PyDict.TYPENAME:
+			default:
+				if(ref < 0)
+					break;
+				System.err.println("couldn't convert "+type+", defaulting to ref");
+			case "ref":
+				return new PyRef(ref);
+				//obj, ref, 
+		}
+		
+		
 		throw new RuntimeException("Not implemented");
 	}
 	
@@ -504,6 +559,9 @@ public abstract class PyVal {
 	public final static PyVal toPyVal( String s ) {
 		return new PyStr( s );
 	}
+	public static PyVal toPyVal( List<?> l ) {
+		return new PyList( l );
+	}
 	
 	/**
 	 * Best py val match of obj
@@ -514,13 +572,15 @@ public abstract class PyVal {
 		if( obj instanceof String s )
 			return toPyVal( s );
 		if( obj instanceof Integer i)
-			return toPyVal(i);
+			return toPyVal((int)i);
 		if( obj instanceof Double d)
-			return toPyVal(d);
+			return toPyVal((double)d);
 		if( obj instanceof Float d)
-			return toPyVal(d);
+			return toPyVal((float)d);
 		if( obj instanceof Boolean b)
-			return toPyVal(b);
+			return toPyVal((boolean)b);
+		if( obj instanceof List l)
+			return toPyVal( l );
 		
 		throw new NotImplementedException("type conversion for " + obj.getClass().toString() + " isn't setup!");
 	}

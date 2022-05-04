@@ -19,11 +19,12 @@ import com.theincgi.pyBind.PyBindSockerHandler.Actions;
 import com.theincgi.pyBind.PyBindSockerHandler.ResultMode;
 
 public class PyFunc extends PyVal {
-	private final String refUUID;
+	public static final String TYPENAME = "function";
+	private final long ref;
 	
 	
-	public PyFunc(String refUUID) {
-		this.refUUID = refUUID;
+	public PyFunc(long refUUID) {
+		this.ref = refUUID;
 	}
 	
 	public PyFunc valueOf(String lib, String name) throws InterruptedException, ExecutionException, IOException {
@@ -34,7 +35,7 @@ public class PyFunc extends PyVal {
 	@Override
 	public PyVal call(JSONArray args, JSONObject kwargs) throws PyBindException {
 		try {
-			return PyBind.getSocketHandler().call(args);
+			return PyBind.getSocketHandler().call(ref, args, kwargs);
 		} catch (JSONException | PyBindException | InterruptedException | ExecutionException | IOException e) {
 			throw new PyBindException(e);
 		}
@@ -43,7 +44,7 @@ public class PyFunc extends PyVal {
 	@Override
 	public PyVal invoke(JSONArray args, JSONObject kwargs) throws PyBindException {
 		try {
-			return PyBind.getSocketHandler().invoke(args, kwargs);
+			return PyBind.getSocketHandler().invoke(ref, args, kwargs);
 		} catch (JSONException | PyBindException | InterruptedException | ExecutionException | IOException e) {
 			throw new PyBindException(e);
 		}
@@ -51,7 +52,7 @@ public class PyFunc extends PyVal {
 	
 	@Override
 	public String getType() {
-		return "function";
+		return TYPENAME;
 	}
 	
 	@Override
@@ -67,6 +68,14 @@ public class PyFunc extends PyVal {
 	@Override
 	public String toStr() {
 		return "<function>";
+	}
+	
+	@Override
+	public JSONObject asJsonValue() {
+		JSONObject obj = new JSONObject();
+		obj.put("type", TYPENAME);
+		obj.put("ref", ref);
+		return obj;
 	}
 	
 }

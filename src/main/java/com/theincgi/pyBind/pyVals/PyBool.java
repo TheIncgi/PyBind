@@ -3,6 +3,7 @@ package com.theincgi.pyBind.pyVals;
 import org.json.JSONObject;
 
 public class PyBool extends PyFloat {
+	public static final String TYPENAME = "bool";
 	public static PyBool TRUE = new PyBool(true), FALSE = new PyBool(false);
 	
 	private PyBool(boolean value) {
@@ -11,7 +12,7 @@ public class PyBool extends PyFloat {
 
 	@Override
 	public String getType() {
-		return "bool";
+		return TYPENAME;
 	}
 	
 	@Override
@@ -63,7 +64,7 @@ public class PyBool extends PyFloat {
 	public Object asJsonValue() {
 		JSONObject obj = new JSONObject();
 		obj.put("type", getType());
-		obj.put("value", toBool());
+		obj.put("val", toBool());
 		return obj;
 	}
 }

@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import com.theincgi.pyBind.PyBindException;
 
 public class PyFloat extends PyVal {
+	public static final String TYPENAME = "float";
 	protected final double value;
 	
 	public PyFloat(double d) {
@@ -13,7 +14,7 @@ public class PyFloat extends PyVal {
 	
 	@Override
 	public String getType() {
-		return "float";
+		return TYPENAME;
 	}
 	
 	@Override
@@ -77,10 +78,10 @@ public class PyFloat extends PyVal {
 	}
 	
 	@Override
-	public Object asJsonValue() {
+	public JSONObject asJsonValue() {
 		JSONObject obj = new JSONObject();
-		obj.put("type", getType());
-		obj.put("value", value);
+		obj.put("type", TYPENAME);
+		obj.put("val", value);
 		return obj;
 	}
 }

@@ -3,9 +3,12 @@ package com.theincgi.pyBind.pyVals;
 import java.util.Objects;
 import java.util.WeakHashMap;
 
+import org.json.JSONObject;
+
 import com.theincgi.pyBind.PyBindException;
 
 public class PyInt extends PyVal {
+	public static final String TYPENAME = "int";
 	private final int value;
 	
 	private static WeakHashMap<Integer, PyInt> ints = new WeakHashMap<>();
@@ -22,7 +25,7 @@ public class PyInt extends PyVal {
 	
 	@Override
 	public String getType() {
-		return "int";
+		return TYPENAME;
 	}
 	
 	@Override
@@ -89,5 +92,13 @@ public class PyInt extends PyVal {
 	@Override
 	public boolean toBool() {
 		return value != 0;
+	}
+	
+	@Override
+	public JSONObject asJsonValue() {
+		JSONObject json = new JSONObject();
+		json.put("type", TYPENAME);
+		json.put("val",  value);
+		return json;
 	}
 }

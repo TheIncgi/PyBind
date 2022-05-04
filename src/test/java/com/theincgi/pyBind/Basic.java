@@ -8,7 +8,6 @@ public class Basic {
 	
 	@Test
 	public void test() {
-		PyBind
 	}
 
 }

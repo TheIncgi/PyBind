@@ -47,12 +47,18 @@ public class PyBindSockerHandler implements Closeable {
 					JSONObject obj = socket.readJSON();
 					if(obj.has("id")) {
 						FutureResponse<JSONObject> resp = responses.get(obj.getLong("id"));
-						resp.setResult( obj.getJSONObject("value") );
+						resp.setResult( obj.getJSONObject("msg") );
 						
 					}else{
 						String op = obj.getString("op");
 						switch(op) {
-							
+							case "ERR":{
+								var msg = obj.getJSONObject("msg");
+								FutureResponse<JSONObject> resp = responses.get(msg.getLong("from"));
+								resp.setException(new PyException( msg.getString("msg") ));
+								break;
+							}
+								
 							default:
 								throw new RuntimeException("Unhandled op '"+op+"'");
 						}
@@ -74,46 +80,52 @@ public class PyBindSockerHandler implements Closeable {
 	public JSONObject send(Actions action, ResultMode mode,  JSONObject info) throws JSONException, InterruptedException, ExecutionException, IOException {
 		info.put("op", action.name());
 		info.put("mode", mode.name());
-		return new JSONObject(send(info).get());
+		return send(info).get();
 	}
 	
 	
-	public PyVal call(JSONArray args) throws JSONException, InterruptedException, ExecutionException, IOException {
+	public PyVal call(long ref, JSONArray args) throws JSONException, InterruptedException, ExecutionException, IOException {
 		JSONObject info = new JSONObject();
 		info.put("args", info);
+		info.put("ref", ref);
 		JSONObject result = send(Actions.CALL, ResultMode.COPY, info);
 		return PyVal.fromJson(result);
 	}
-	public PyVal call(JSONObject kwargs) throws JSONException, InterruptedException, ExecutionException, IOException {
+	public PyVal call(long ref, JSONObject kwargs) throws JSONException, InterruptedException, ExecutionException, IOException {
 		JSONObject info = new JSONObject();
 		info.put("kwargs", info);
+		info.put("ref", ref);
 		JSONObject result = send(Actions.CALL, ResultMode.COPY, info);
 		return PyVal.fromJson(result);
 	}
-	public PyVal call(JSONArray args, JSONObject kwargs) throws JSONException, InterruptedException, ExecutionException, IOException {
+	public PyVal call(long ref, JSONArray args, JSONObject kwargs) throws JSONException, InterruptedException, ExecutionException, IOException {
 		JSONObject info = new JSONObject();
 		info.put("args", args);
 		info.put("kwargs", kwargs);
+		info.put("ref", ref);
 		JSONObject result = send(Actions.CALL, ResultMode.COPY, info);
 		return PyVal.fromJson(result);
 	}
 	
-	public PyVal invoke(JSONArray args) throws JSONException, InterruptedException, ExecutionException, IOException {
+	public PyVal invoke(long ref, JSONArray args) throws JSONException, InterruptedException, ExecutionException, IOException {
 		JSONObject info = new JSONObject();
 		info.put("args", info);
+		info.put("ref", ref);
 		JSONObject result = send(Actions.CALL, ResultMode.REF, info);
 		return PyVal.fromJson(result);
 	}
-	public PyVal invoke(JSONObject kwargs) throws JSONException, InterruptedException, ExecutionException, IOException {
+	public PyVal invoke(long ref, JSONObject kwargs) throws JSONException, InterruptedException, ExecutionException, IOException {
 		JSONObject info = new JSONObject();
 		info.put("kwargs", info);
+		info.put("ref", ref);
 		JSONObject result = send(Actions.CALL, ResultMode.REF, info);
 		return PyVal.fromJson(result);
 	}
-	public PyVal invoke(JSONArray args, JSONObject kwargs) throws JSONException, InterruptedException, ExecutionException, IOException {
+	public PyVal invoke(long ref, JSONArray args, JSONObject kwargs) throws JSONException, InterruptedException, ExecutionException, IOException {
 		JSONObject info = new JSONObject();
 		info.put("args", args);
 		info.put("kwargs", kwargs);
+		info.put("ref", ref);
 		JSONObject result = send(Actions.CALL, ResultMode.REF, info);
 		return PyVal.fromJson(result);
 	}
@@ -124,7 +136,7 @@ public class PyBindSockerHandler implements Closeable {
 		request.put("lib", lib);
 		request.put("name", name);
 		JSONObject resp = send(request).get();
-		return new PyRef(resp.getString("uuid")).eval();
+		return new PyRef(resp.getLong("ref"));
 	}
 	
 	public PyVal bindGlobal(String name) throws InterruptedException, ExecutionException, IOException {
@@ -132,11 +144,39 @@ public class PyBindSockerHandler implements Closeable {
 		request.put("op", "BIND_GLOBAL");
 		request.put("name", name);
 		JSONObject resp = send(request).get();
-		return new PyRef(resp.getString("uuid")).eval();
+		return new PyRef(resp.getLong("ref"));
 	}
 	
-	public void unbind(String uuid) {
-		
+	public void unbind(long ref) throws IOException {
+		JSONObject info = new JSONObject();
+		info.put("op", "UNBIND");
+		info.put("ref", ref);
+		send(info);
+	}
+	
+	/**
+	 * Returns PyVal of dereferenced value, or ref if it can't be represented in another way
+	 * */
+	public PyVal get(long ref) throws PyBindException {
+		try {
+			JSONObject info = new JSONObject();
+			info.put("op", "GET");
+			info.put("ref", ref);
+			return PyVal.fromJson( send(info).get() );
+		} catch (InterruptedException | ExecutionException | IOException e) {
+			throw new PyBindException(e);
+		}
+	}
+	public String refType(long ref) throws PyBindException {
+		try {
+			JSONObject info = new JSONObject();
+			info.put("op", "TYPE");
+			info.put("ref", ref);
+			JSONObject resp = send(info).get();
+			return resp.getString("type");
+		} catch (JSONException | InterruptedException | ExecutionException | IOException e) {
+			throw new PyBindException(e);
+		}
 	}
 	
 	@Override
@@ -146,10 +186,17 @@ public class PyBindSockerHandler implements Closeable {
 	
 	private class  FutureResponse<T> implements Future<T> {
 		private T result;
+		private PyException ex;
 		
 		public void setResult(T result) {
 			synchronized (this) {
 				this.result = result;
+				this.notifyAll();
+			}
+		}
+		public void setException( PyException ex ) {
+			synchronized (this) {
+				this.ex = ex;
 				this.notifyAll();
 			}
 		}
@@ -170,11 +217,13 @@ public class PyBindSockerHandler implements Closeable {
 		}
 
 		@Override
-		public T get() throws InterruptedException, ExecutionException {
+		public T get() throws InterruptedException, PyException {
 			synchronized (this) {
-				while(result==null)
+				while(result==null && ex==null)
 					this.wait();
 			}
+			if(ex!=null)
+				try{throw ex;}catch (PyException e) {throw new PyException(e);} //add in own stack trace
 			return result;
 		}
 
@@ -184,7 +233,7 @@ public class PyBindSockerHandler implements Closeable {
 			synchronized (this) {
 				long millis = unit.toMillis(timeout);
 				long then = System.currentTimeMillis();
-				while(result==null) {
+				while(result==null && ex==null) {
 					if(millis < 0) {
 						throw new TimeoutException();
 					}
@@ -194,6 +243,8 @@ public class PyBindSockerHandler implements Closeable {
 					then = now;
 				}
 			}
+			if(ex!=null)
+				try{throw ex;}catch (PyException e) {throw new PyException(e);} //add in own stack trace
 			return result;
 		}
 		

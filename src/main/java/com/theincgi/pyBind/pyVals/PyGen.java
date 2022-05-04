@@ -10,6 +10,7 @@ import com.theincgi.pyBind.PyBindException;
  * Represents a generator in python
  * */
 public class PyGen extends PyVal {
+	public static final String TYPENAME = "generator";
 	private String uuid;
 	public PyGen(String refUUID) {
 		this.uuid = refUUID;
@@ -27,7 +28,7 @@ public class PyGen extends PyVal {
 	
 	@Override
 	public String getType() {
-		return "generator";
+		return TYPENAME;
 	}
 	
 	@Override

@@ -5,6 +5,7 @@ import java.util.StringJoiner;
 import com.theincgi.pyBind.PyBindException;
 
 public class PyTuple extends PyVal {
+	public static final String TYPENAME = "tuple";
 	private final PyVal[] values;
 	public PyTuple(PyVal... vals) {
 		values = vals;
@@ -12,7 +13,7 @@ public class PyTuple extends PyVal {
 	
 	@Override
 	public String getType() {
-		return "tuple";
+		return TYPENAME;
 	}
 	
 	@Override

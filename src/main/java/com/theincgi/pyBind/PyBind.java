@@ -95,7 +95,7 @@ public class PyBind implements AutoCloseable, Closeable{
 		putScript("JavaObj.py");
 		putScript("JsonSocket.py");
 		putScript("test.py");
-		putScript("basic.py");
+		putScript("simple.py");
 		ProcessBuilder pb = new ProcessBuilder(pythonCmd.getAbsolutePath(),"-u", "pyBind/init.py", port+"");
 		pb.directory(pythonWorkingDir);
 		pb.inheritIO();
@@ -156,13 +156,12 @@ public class PyBind implements AutoCloseable, Closeable{
 						}
 					}
 					
-					JSONObject f = socketHandler.get().send(Actions.CALL, pyInfo.mode(), callInfo);
+					PyVal result = func.call(callArgs, callKwargs);
 					
 					Class rType = method.getReturnType();
 					if(rType.equals(Void.class))
 						return null;
 					
-					PyVal result = PyVal.fromJson(f);
 					return Common.coerce(result, rType);
 				}
 				throw new RuntimeException("Missing @Py on "+method.getName());

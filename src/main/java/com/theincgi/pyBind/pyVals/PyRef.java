@@ -5,30 +5,25 @@ import java.util.LinkedHashMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.theincgi.pyBind.PyBind;
 import com.theincgi.pyBind.PyBindException;
 
 public class PyRef extends PyVal {
 	
-	private final String uuid;
-	private PyVal evaluated;
+	private final long ref;
+//	private PyVal evaluated;
 	
-	public PyRef(String uuid) {
-		this.uuid = uuid;
+	public PyRef(long ref) {
+		if(ref < 0)
+			throw new PyBindException("Invalid reference ("+ref+")");
+		this.ref = ref;
 	}
 	
-	protected void checkRef() {
-		if(evaluated==null)
-			throw new PyBindUnevaluatedRef("Python variable reference doesn't have a stored value. Call `eval()` or `set` first.");
+	public PyVal get() {
+		return PyBind.getSocketHandler().get( ref );
 	}
-	
-	public PyRef eval() {
-		//TODO eval
-		return this;
-	}
-	public PyRef set(PyVal val) {
-		evaluated = val;
-		//TODO update remote var
-		return this;
+	public void set(PyVal val) {
+		
 	}
 	
 	@Override
@@ -43,22 +38,66 @@ public class PyRef extends PyVal {
 	
 	@Override
 	public PyVal call(JSONArray args, JSONObject kwargs) {
-		checkRef();
 		return evaluated.call(args,kwargs);
 	}
 
 	@Override
 	public PyVal invoke(JSONArray args, JSONObject kwargs) {
-		checkRef();
 		return evaluated.invoke(args, kwargs);
 	}
 
 	@Override
 	public String getType() {
-		checkRef();
-		return evaluated.getType();
+		return PyBind.getSocketHandler().refType( ref );
 	}
 
+	@Override
+	public PyBool checkBool() {
+		PyVal v = get();
+		if(v.isRef()) super.checkBool();
+		return v.checkBool();
+	}
+	
+	@Override
+	public PyFloat checkDouble() {
+		PyVal v = get();
+		if(v.isRef()) return super.checkDouble();
+		return v.checkDouble();
+	}
+	
+	@Override
+	public PyFunc checkFunction() {
+		PyVal v = get();
+		if(v.isRef()) return super.checkFunction();
+		return v.checkFunction();
+	}
+	
+	@Override
+	public PyInt checkInt() {
+		PyVal v = get();
+		if(v.isRef()) return super.checkInt();
+		return v.checkInt();
+	}
+	
+	@Override
+	public PyList checkList() {
+		PyVal v = get();
+		if(v.isRef()) return super.checkList();
+		return v.checkList();
+	}
+	@Override
+	public PyStr checkPyStr() {
+		PyVal v = get();
+		if(v.isRef()) return super.checkPyStr();
+		return v.checkPyStr();
+	}
+	@Override
+	public PyTuple checkTuple() {
+		PyVal v = get();
+		if(v.isRef()) return super.checkTuple();
+		return v.checkTuple();
+	}
+	
 
 	@Override
 	public int toInt() {
@@ -177,8 +216,10 @@ public class PyRef extends PyVal {
 
 	@Override
 	public JSONObject asJsonValue() {
-		checkRef();
-		return evaluated.asJsonValue();
+		JSONObject obj = new JSONObject();
+		obj.put("type", "ref");
+		obj.put("ref", ref);
+		return obj;
 	}
 	
 }
