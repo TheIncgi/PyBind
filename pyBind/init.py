@@ -96,6 +96,21 @@ def serialize( value, ref=None ):
             'ref':ref
         }
     
+    if isinstance( value, list ):
+        v = []
+        for x in value:
+            v.append(serialize( x ))
+        value = v
+    
+    if isinstance( value, dict ):
+        v = {}
+        for x,y in value.items():
+            if isinstance(x,str):
+                v[x] = serialize( y )
+            else:
+                v[serialize( x )] = serialize( y )
+        value = v
+
     rsp = {
         'type':type(value).__name__,
         'val': value
