@@ -19,8 +19,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.WeakHashMap;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,6 +30,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -123,6 +128,12 @@ public class PyBind implements AutoCloseable, Closeable{
 	}
 	
 	@SuppressWarnings("unchecked")
+	/**
+	 * Implements methods defined by an interface <code>cls</code><br>
+	 * which must contain {@link Py} annotation (and optionaly {@link Kwarg} annotation on params)<br>
+	 * params and return value will be coerced as closely as possible.<br>
+	 *
+	 * */ //TODO mention supported types
 	public static <T> T bindPy(Class<T> cls) throws PyBindException {
 		init();
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
@@ -168,6 +179,9 @@ public class PyBind implements AutoCloseable, Closeable{
 			}});
 	}
 	
+	/**
+	 * Return a PyFunc representing a function located in python code
+	 * */
 	@SuppressWarnings("unchecked")
 	public static PyFunc bindPy(String lib, String name) throws PyBindException {
 		init();
@@ -176,6 +190,28 @@ public class PyBind implements AutoCloseable, Closeable{
 		} catch (InterruptedException | ExecutionException | IOException e) {
 			throw new PyBindException(e);
 		}
+	}
+	
+	/**
+	 * Makes a java object accessible to python
+	 * */
+	public static PyVal bindJava( Object obj ) {
+		//TODO
+	}
+	public static PyFunc bindJava( Runnable runnable ) {
+		//TODO
+	}
+	public static PyFunc bindJava( Supplier<PyVal> supplier ) {
+		//TODO
+	}
+	public static PyFunc bindJava( Function<PyVal, PyVal> function ) {
+		//TODO
+	}
+	public static PyFunc bindJava( Consumer<PyVal> consumer ) {
+		//TODO
+	}
+	public static PyFunc bindJava( Iterator<PyVal> iterator ) {
+		//TODO
 	}
 	
 	public static PyBindSockerHandler getSocketHandler() throws PyBindException {

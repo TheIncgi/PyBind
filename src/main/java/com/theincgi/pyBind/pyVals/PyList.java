@@ -10,6 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.theincgi.pyBind.PyBindException;
+import com.theincgi.pyBind.PyException;
 
 public class PyList extends PyVal {
 	public static final String TYPENAME = "list";
@@ -29,7 +30,7 @@ public class PyList extends PyVal {
 
 	public PyList(List<?> l) {
 		var it = l.iterator();
-		if(it.hasNext()) for(Object obj = it.next(); it.hasNext(); obj=it.next())
+		if(it.hasNext()) for(Object obj = it.next(); obj!=null; obj=it.hasNext() ? it.next() : null)
 			list.add( PyVal.toPyVal(obj) );
 	}
 
@@ -79,6 +80,27 @@ public class PyList extends PyVal {
 	@Override
 	public int len() {
 		return list.size();
+	}
+	
+	@Override
+	public PyVal index(int a) {
+		return list.get(a);
+	}
+	
+	@Override
+	public PyVal index(Integer a, Integer b) {
+		PyList out = new PyList();
+		for(int i=a; i<b; i++)
+			out.list.add(list.get(i));
+		return out;
+	}
+	
+	@Override
+	public PyVal index(PyRef r) {
+		if(r.isInt()) {
+			return index(r.toInt());
+		}
+		throw new PyException("Expected reference to int type, got "+r.getType());
 	}
 	
 	@Override

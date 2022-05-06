@@ -61,7 +61,7 @@ public class PyBool extends PyFloat {
 	}
 	
 	@Override
-	public Object asJsonValue() {
+	public JSONObject asJsonValue() {
 		JSONObject obj = new JSONObject();
 		obj.put("type", getType());
 		obj.put("val", toBool());

@@ -6,7 +6,7 @@ import org.json.JSONObject;
 
 import com.theincgi.pyBind.PyBindException;
 
-public class PyStr extends PyVal {
+public class PyStr extends PyVal { //TODO hash & equals
 	public static final String TYPENAME = "str";
 	private final String value;
 	public PyStr(String str) {

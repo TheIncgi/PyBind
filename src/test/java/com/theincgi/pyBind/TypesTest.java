@@ -42,7 +42,7 @@ public class TypesTest {
 		
 		PyList pyList = bindPy("simple","reverseList").call(list).checkList();
 		for(int i = 0; i<list.size(); i++)
-			assertEquals(list.get(i), pyList.index(3-i));
+			assertEquals(list.get(i).intValue(), pyList.index(2-i).checkInt().toInt());
 	}
 	
 	@Test
@@ -53,9 +53,9 @@ public class TypesTest {
 		map.put("c", 3);
 		
 		PyDict dict = bindPy("simple","dictReverse").call(map).checkDict();
-		assertEquals("a", dict.index(1).checkPyStr().toString());
-		assertEquals("b", dict.index(2).checkPyStr().toString());
-		assertEquals("c", dict.index(3).checkPyStr().toString());
+		assertEquals("a", dict.index(1).checkPyStr().toStr());
+		assertEquals("b", dict.index(2).checkPyStr().toStr());
+		assertEquals("c", dict.index(3).checkPyStr().toStr());
 	}
 	
 }

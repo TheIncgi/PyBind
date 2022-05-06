@@ -4,6 +4,7 @@ import static com.theincgi.pyBind.Common.expected;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.json.JSONArray;
@@ -137,6 +138,15 @@ public abstract class PyVal {
 	 * */
 	public boolean isRef() {
 		return false;
+	}
+	
+	/**
+	 * if {@link #isRef()} then<br>
+	 * return value as {@link PyRef}
+	 * else throw {@link PyTypeMismatchException}
+	 * */
+	public PyRef checkPyRef() {
+		throw new PyTypeMismatchException( Common.expected("ref", getType()) );
 	}
 	
 	/**
@@ -450,6 +460,16 @@ public abstract class PyVal {
 	public PyVal index(int a) {
 		throw new PyTypeMismatchException( Common.expected("list or tuple", getType()) );
 	}
+	
+	/**
+	 * this[a]<br>
+	 * may through {@link PyBindException} if it is not valid for this type<br>
+	 * returns def if a is out of bounds or does not exist in dictionary
+	 * */
+	public PyVal index(int a, PyVal def) {
+		throw new PyTypeMismatchException( Common.expected("list or tuple", getType()) );		
+	}
+	
 
 	/**
 	 * this[a:b]<br>
@@ -458,6 +478,15 @@ public abstract class PyVal {
 	 * */
 	public PyVal index(Integer a, Integer b) {
 		throw new PyTypeMismatchException( Common.expected("list or tuple", getType()) );
+	}
+	
+	/**
+	 * this[a:b]<br>
+	 * may through {@link PyBindException} if it is not valid for this type<br>
+	 * returns def if a is out of bounds or does not exist in dictionary
+	 * */
+	public PyVal index(Integer a, Integer b, PyVal def) {
+		throw new PyTypeMismatchException( Common.expected("list or tuple", getType()) );		
 	}
 	
 	/**
@@ -475,7 +504,22 @@ public abstract class PyVal {
 	public PyVal index(String str) {
 		throw new PyTypeMismatchException( Common.expected("dict", getType()) );
 	}
-	public PyVal index(PyRef r) {
+	public PyVal index(String str, PyVal def) {
+		throw new PyTypeMismatchException( Common.expected("dict", getType()) );
+	}
+	
+	/**
+	 * this[ v ] or this.get( v ) for dict<br>
+	 * if this and v are both ref, then v's value is retrieved
+	 * */
+	public PyVal index(PyVal v) {
+		throw new PyTypeMismatchException( Common.expected("list, dict or tuple", getType()) );		
+	}
+	/**
+	 * this[ v ] or this.get( v, def ) for dict<br>
+	 * if this and v are both ref, then v's value is retrieved
+	 * */
+	public PyVal index(PyVal v, PyVal def) {
 		throw new PyTypeMismatchException( Common.expected("list, dict or tuple", getType()) );		
 	}
 	
@@ -507,6 +551,8 @@ public abstract class PyVal {
 		String            val = json.optString("val");
 		long              ref = json.optLong("ref",-1);
 		
+		boolean ordered = false;
+		
 		switch( type ) {
 			case PyBool.TYPENAME:
 				return PyBool.toPyVal( val.equals("True"));
@@ -530,10 +576,14 @@ public abstract class PyVal {
 			case PyList.TYPENAME:
 				return new PyList( json.getJSONArray("val") );
 				
+			case "odict":
+				ordered = true;
+			case PyDict.TYPENAME:
+				return new PyDict( json.getJSONObject("val"), ordered );
+				
 			case PyTuple.TYPENAME:
 			
 			case PyGen.TYPENAME:
-			case PyDict.TYPENAME:
 			default:
 				if(ref < 0)
 					break;
@@ -562,6 +612,9 @@ public abstract class PyVal {
 	public static PyVal toPyVal( List<?> l ) {
 		return new PyList( l );
 	}
+	public static PyVal toPyVal( Map<?,?> m ) {
+		return new PyDict( m );
+	}
 	
 	/**
 	 * Best py val match of obj
@@ -581,6 +634,8 @@ public abstract class PyVal {
 			return toPyVal((boolean)b);
 		if( obj instanceof List l)
 			return toPyVal( l );
+		if( obj instanceof Map<?, ?> m)
+			return toPyVal( m );
 		
 		throw new NotImplementedException("type conversion for " + obj.getClass().toString() + " isn't setup!");
 	}

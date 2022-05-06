@@ -103,12 +103,19 @@ def serialize( value, ref=None ):
         value = v
     
     if isinstance( value, dict ):
-        v = {}
+        v = {
+            'keys':  [],
+            'vals': []
+        }
         for x,y in value.items():
             if isinstance(x,str):
-                v[x] = serialize( y )
+                v['keys'].append( x )
             else:
-                v[serialize( x )] = serialize( y )
+                v['keys'].append( serialize( x ) )
+            if isinstance(x,str):
+                v['vals'].append( y )
+            else:
+                v['vals'].append( serialize( y ) )
         value = v
 
     rsp = {
@@ -122,6 +129,7 @@ def serialize( value, ref=None ):
     return rsp
 
 def deserialize( jsonVal, evaluateRefs=True ):
+    # print("Debug: deserialize | "+str(jsonVal))
     ty = jsonVal["type"]
 
     if ty == "int" or\
@@ -137,7 +145,7 @@ def deserialize( jsonVal, evaluateRefs=True ):
 
     if ty == "dict" or ty=="odict":
         val = {} if ty=="dict" else OrderedDict()
-        for k,v in jsonVal.items():
+        for k,v in zip(jsonVal["val"]["keys"], jsonVal["val"]["vals"]):
             if isinstance(k, str):
                 val[k] = deserialize(v, evaluateRefs)
             else:
