@@ -154,6 +154,13 @@ public class PyBindSockerHandler implements Closeable {
 		send(info);
 	}
 	
+	public int countRef(long ref) throws IOException {
+		JSONObject info = new JSONObject();
+		info.put("op", "REFCOUNT");
+		info.put("ref", ref);
+		send(info);
+	}
+	
 	/**
 	 * Returns PyVal of dereferenced value, or ref if it can't be represented in another way
 	 * */
