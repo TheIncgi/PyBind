@@ -1,6 +1,6 @@
 package com.theincgi.pyBind.pyVals;
 
-import static com.theincgi.pyBind.Common.expected;
+import static com.theincgi.pyBind.utils.Common.expected;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -10,11 +10,11 @@ import java.util.Optional;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.theincgi.pyBind.Common;
 import com.theincgi.pyBind.NotImplementedException;
 import com.theincgi.pyBind.PyBind;
 import com.theincgi.pyBind.PyBindException;
 import com.theincgi.pyBind.PyTypeMismatchException;
+import com.theincgi.pyBind.utils.Common;
 
 
 //___Val() -> cast when possible to Py____
@@ -536,6 +536,20 @@ public abstract class PyVal {
 		return false;
 	}
 	
+	public PyGen checkGen() {
+		throw new PyTypeMismatchException( Common.expected(PyGen.TYPENAME, getType()) );	
+	}
+	
+	/**
+	 * Return true if this represents a binding to a java object
+	 * */
+	public boolean isJavaObj() {
+		return false;
+	}
+	public JavaObject checkJavaObject() {
+		throw new PyTypeMismatchException( Common.expected(JavaObject.TYPENAME, getType()) );	
+	}
+	
 	/**
 	 * for generators, gets the next value
 	 * */
@@ -639,6 +653,8 @@ public abstract class PyVal {
 		
 		throw new NotImplementedException("type conversion for " + obj.getClass().toString() + " isn't setup!");
 	}
+
+	
 
 	
 	

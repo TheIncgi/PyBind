@@ -25,4 +25,17 @@ def dictReverse( d ):
     for k,v in d.items():
         out[v] = k
     return out
-    
+
+def callThat( f, *args ):
+    return f(*args)
+
+def sampleIterator( it, times ):
+    out = []
+    for i in range(0,times):
+        out.append( next( it ) )
+    return out
+
+def testObj( obj, value ):
+    v = obj.getX()
+    v = v + value
+    obj.setX( v )

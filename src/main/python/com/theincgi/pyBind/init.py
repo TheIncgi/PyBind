@@ -8,9 +8,13 @@ from tkinter import N
 import traceback
 from typing import OrderedDict
 from JsonSocket import JsonSocket, isJsonSerializable
+from JavaObj import JavaObj
 
 connection = None
+
 refs = {}
+
+
 _running = False
 
 def _nextRef():
@@ -22,6 +26,20 @@ _nextRef = _nextRef()
 def nextRef():
     return next(_nextRef)
 
+def bindJava( javaRef, jClass ):
+    key = "J:%d" % (javaRef,)
+    if key in refs:
+        return refs[key]["ref"]
+    
+    pyRef = nextRef()
+    val = JavaObj( connection, javaRef, jClass, pyRef)
+
+    refs[pyRef] = val
+    refs[key] = val
+
+    return pyRef
+
+
 def bind( module, name ):
     if module not in modules:
         mod = __import__( module, globals(), locals() )
@@ -30,7 +48,7 @@ def bind( module, name ):
         raise Exception("could not import module '%%'" % (module,))
 
     if not hasattr( mod, name ):
-        raise Exception("no attribute %s exists in module %s" % (module, name))
+        raise Exception("no attribute '%s' exists in module '%s'" % (name, module))
 
     key = "M:%s$%s" % (module, name)
     if key in refs:
@@ -224,7 +242,7 @@ def runMessageHandler():
                     rsp = bindReturn( result )
 
                 pass
-            elif op == "BIND":
+            elif op == "BIND": # make python available to java
                 lib = msg["lib"]
                 name = msg["name"]
                 ref = bind( module=lib, name=name )
@@ -232,7 +250,7 @@ def runMessageHandler():
                     'type':'ref',
                     'ref':ref
                 }
-            elif op == "UNBIND":
+            elif op == "UNBIND": # delete ref of pyton resource
                 ref = msg["ref"]
                 unbind( ref )
 
@@ -264,6 +282,13 @@ def runMessageHandler():
                 connection.sendResult( id, results )
 
             elif op == "ERR":
+                pass
+            
+            elif op == "JBIND":
+                ref = msg["ref"]
+                exp = msg["expect"]
+
+            elif op == "JUNBIND": #python holds only reference to java stuff, GC'd when python is done with it
                 pass
 
             else:

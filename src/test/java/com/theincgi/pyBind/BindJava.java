@@ -15,7 +15,7 @@ public class BindJava {
 	
 	PyFunc callThat = PyBind.bindPy("simple", "callThat");
 	PyFunc sampleIterator = PyBind.bindPy("simple", "sampleIterator");
-	PyFunc testObject = PyBind.bindPy("simple", "testObject");
+	PyFunc testObject = PyBind.bindPy("simple", "testObj");
 	
 	@Test
 	public void runnable() {

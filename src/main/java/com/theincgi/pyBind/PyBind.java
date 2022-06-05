@@ -40,8 +40,11 @@ import org.json.JSONObject;
 
 import com.theincgi.pyBind.PyBindSockerHandler.Actions;
 import com.theincgi.pyBind.PyBindSockerHandler.ResultMode;
+import com.theincgi.pyBind.pyVals.JavaBinds;
 import com.theincgi.pyBind.pyVals.PyFunc;
+import com.theincgi.pyBind.pyVals.PyGen;
 import com.theincgi.pyBind.pyVals.PyVal;
+import com.theincgi.pyBind.utils.Common;
 
 public class PyBind implements AutoCloseable, Closeable{
 	
@@ -196,22 +199,28 @@ public class PyBind implements AutoCloseable, Closeable{
 	 * Makes a java object accessible to python
 	 * */
 	public static PyVal bindJava( Object obj ) {
-		//TODO
+		long ref = JavaBinds.bind( obj );
+		return PyBind.socketHandler.get().shareJavaObject( ref, "object", obj.getClass().getName() );
 	}
 	public static PyFunc bindJava( Runnable runnable ) {
-		//TODO
+		long ref = JavaBinds.bind( runnable );
+		return PyBind.socketHandler.get().shareJavaObject( ref, "func", runnable.getClass().getName() ).checkFunction();
 	}
 	public static PyFunc bindJava( Supplier<PyVal> supplier ) {
-		//TODO
+		long ref = JavaBinds.bind( supplier );
+		return PyBind.socketHandler.get().shareJavaObject( ref, "func", supplier.getClass().getName() ).checkFunction();
 	}
 	public static PyFunc bindJava( Function<PyVal, PyVal> function ) {
-		//TODO
+		long ref = JavaBinds.bind( function );
+		return PyBind.socketHandler.get().shareJavaObject( ref, "func", function.getClass().getName() ).checkFunction();
 	}
 	public static PyFunc bindJava( Consumer<PyVal> consumer ) {
-		//TODO
+		long ref = JavaBinds.bind( consumer );
+		return PyBind.socketHandler.get().shareJavaObject( ref, "func", consumer.getClass().getName() ).checkFunction();
 	}
-	public static PyFunc bindJava( Iterator<PyVal> iterator ) {
-		//TODO
+	public static PyGen bindJava( Iterator<PyVal> iterator ) {
+		long ref = JavaBinds.bind( iterator );
+		return PyBind.socketHandler.get().shareJavaObject( ref, "gen", iterator.getClass().getName() ).checkGen();
 	}
 	
 	public static PyBindSockerHandler getSocketHandler() throws PyBindException {

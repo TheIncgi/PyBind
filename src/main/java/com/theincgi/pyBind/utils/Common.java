@@ -1,4 +1,4 @@
-package com.theincgi.pyBind;
+package com.theincgi.pyBind.utils;
 
 import java.io.File;
 import java.lang.annotation.Annotation;
@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.theincgi.pyBind.Kwarg;
+import com.theincgi.pyBind.NotImplementedException;
 import com.theincgi.pyBind.pyVals.PyVal;
 
 public class Common {
@@ -33,6 +35,13 @@ public class Common {
 			}
 		}
 		return null;
+	}
+	
+	public static <T> boolean isAny( T a, T... any ) {
+		for(var c : any)
+			if( a.equals(any) )
+				return true;
+		return false;
 	}
 	
 	public static Object coerce(PyVal val, Class to, Class... listType) {

@@ -46,4 +46,9 @@ public class PyGen extends PyVal {
 		throw new NotImplementedException();
 	}
 	
+	@Override
+	public PyGen checkGen() {
+		return this;
+	}
+	
 }

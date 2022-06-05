@@ -15,6 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.theincgi.pyBind.pyVals.PyFunc;
 import com.theincgi.pyBind.pyVals.PyRef;
 import com.theincgi.pyBind.pyVals.PyVal;
 
@@ -269,6 +270,19 @@ public class PyBindSockerHandler implements Closeable {
 		COPY,
 		REF,
 		IGNORE;
+	}
+	public PyVal shareJavaObject(long ref, String expectedType, String clas) {
+		try {
+			JSONObject info = new JSONObject();
+			info.put("op", "JBIND");
+			info.put("expect", expectedType);
+			info.put("class", clas);
+			info.put("ref", ref);
+			JSONObject resp = send(info).get();
+			return PyVal.fromJson( resp );
+		} catch (JSONException | InterruptedException | ExecutionException | IOException e) {
+			throw new PyBindException(e);
+		}
 	}
 	
 }
