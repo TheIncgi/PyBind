@@ -103,7 +103,9 @@ public class SoftHashMap<T, U> implements Map<T,U>, Iterable<Entry<T, U>>{
 	public synchronized U get(Object key) {
 		if( key == null ) throw new NullPointerException("key may not be null");
 		int hash = key.hashCode() % keys.length;
+		
 		var keyList = keys[ hash ];
+		if( keyList == null ) return null;
 		var valList = values[ hash ];
 		
 		int i = 0;

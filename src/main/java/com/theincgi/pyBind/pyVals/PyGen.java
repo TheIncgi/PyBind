@@ -2,6 +2,9 @@ package com.theincgi.pyBind.pyVals;
 
 import java.util.LinkedHashMap;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import com.theincgi.pyBind.NotImplementedException;
 import com.theincgi.pyBind.PyBindException;
 
@@ -11,18 +14,19 @@ import com.theincgi.pyBind.PyBindException;
  * */
 public class PyGen extends PyVal {
 	public static final String TYPENAME = "generator";
-	private String uuid;
-	public PyGen(String refUUID) {
-		this.uuid = refUUID;
+	private long ref;
+	
+	public PyGen(long ref) {
+		this.ref = ref;
 	}
 	
 	@Override
-	public PyVal call(Object... values)  {
+	public PyVal call(JSONArray args, JSONObject kwargs) {
 		throw new PyBindException("Attempt to call "+getType() + "(use next())");
 	}
 	
 	@Override
-	public PyVal invoke(Object... values) {
+	public PyVal invoke(JSONArray args, JSONObject kwargs) {
 		throw new PyBindException("Attempt to call "+getType() + "(use next())");
 	}
 	
@@ -49,6 +53,15 @@ public class PyGen extends PyVal {
 	@Override
 	public PyGen checkGen() {
 		return this;
+	}
+	
+	
+	@Override
+	public JSONObject asJsonValue() {
+		JSONObject obj = new JSONObject();
+		obj.put("type", TYPENAME);
+		obj.put("ref", ref);
+		return obj;
 	}
 	
 }

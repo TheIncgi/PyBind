@@ -1,10 +1,14 @@
 package com.theincgi.pyBind.pyVals;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.concurrent.ExecutionException;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.theincgi.pyBind.NotImplementedException;
 import com.theincgi.pyBind.PyBind;
 import com.theincgi.pyBind.PyBindException;
 
@@ -37,13 +41,21 @@ public class PyRef extends PyVal {
 	/////////////////////
 	
 	@Override
-	public PyVal call(JSONArray args, JSONObject kwargs) {
-		return evaluated.call(args,kwargs);
+	public PyVal call(JSONArray args, JSONObject kwargs) throws PyBindException {
+		try {
+			return PyBind.getSocketHandler().call(ref, args, kwargs);
+		} catch (JSONException | PyBindException | InterruptedException | ExecutionException | IOException e) {
+			throw new PyBindException(e);
+		}
 	}
-
+	
 	@Override
-	public PyVal invoke(JSONArray args, JSONObject kwargs) {
-		return evaluated.invoke(args, kwargs);
+	public PyVal invoke(JSONArray args, JSONObject kwargs) throws PyBindException {
+		try {
+			return PyBind.getSocketHandler().invoke(ref, args, kwargs);
+		} catch (JSONException | PyBindException | InterruptedException | ExecutionException | IOException e) {
+			throw new PyBindException(e);
+		}
 	}
 
 	@Override
@@ -67,9 +79,9 @@ public class PyRef extends PyVal {
 	
 	@Override
 	public PyFunc checkFunction() {
-		PyVal v = get();
-		if(v.isRef()) return super.checkFunction();
-		return v.checkFunction();
+		if( PyBind.getSocketHandler().isCallable(ref) )
+			return new PyFunc( ref );
+		return super.checkFunction();
 	}
 	
 	@Override
@@ -98,90 +110,76 @@ public class PyRef extends PyVal {
 		return v.checkTuple();
 	}
 	
+	
+	@Override
+	public PyVal attrib(String name, boolean asRef) {
+		return PyBind.getSocketHandler().attrib(ref, name, asRef);
+	}
 
 	@Override
 	public int toInt() {
-		checkRef();
-		return evaluated.toInt();
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public boolean isInt() {
-		checkRef();
-		return evaluated.isInt();
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public String toStr() {
-		checkRef();
-		return evaluated.toStr();
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public String toString() {
-		checkRef();
-		return evaluated.toString();
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public boolean isStr() {
-		checkRef();
-		return evaluated.isStr();
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public double toDouble() {
-		checkRef();
-		return evaluated.toDouble();
+		throw new NotImplementedException();
 	}
 	
 	
 	@Override
 	public boolean isFloat() {
-		checkRef();
-		return evaluated.isFloat();
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public boolean toBool() {
-		checkRef();
-		return evaluated.toBool();
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public boolean isBool() {
-		checkRef();
-		return evaluated.isBool();
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public int len() {
-		checkRef();
-		return evaluated.len();
-	}
-
-	@Override
-	public PyVal attrib(String name) {
-		checkRef();
-		return evaluated.attrib(name);
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public PyVal index(int a) {
-		checkRef();
-		return evaluated.index(a);
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public PyVal index(Integer a, Integer b) {
-		checkRef();
-		return evaluated.index(a, b);
+		throw new NotImplementedException();
 	}
 
 	@Override
 	public LinkedHashMap<PyVal, PyVal> toMap() {
-		checkRef();
-		return evaluated.toMap();
+		throw new NotImplementedException();
 	}
 	
 	public static class PyBindUnevaluatedRef extends PyBindException {

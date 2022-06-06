@@ -10,37 +10,37 @@ import java.util.LinkedHashMap;
 import java.util.concurrent.ExecutionException;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.theincgi.pyBind.NotImplementedException;
 import com.theincgi.pyBind.PyBind;
+import com.theincgi.pyBind.PyBindException;
 
 public class PyObj extends PyVal {
-	private String refUUID;
+	private long ref;
 	
 	
-	public PyObj(String ref) {
-		refUUID = ref;
+	public PyObj(long ref) {
+		this.ref = ref;
 	}
 	
-	
-	@Override
-	public PyVal call(JSONArray args) {
-		return PyBind.getSocketHandler().send(CALL, COPY, args).orElse(PyVal.NONE);
-	}
-	@Override
-	public PyVal call(JSONObject kwargs) {
-	}
 	@Override
 	public PyVal call(JSONArray args, JSONObject kwargs) {
-	}
-	@Override
-	public PyVal call(Object... values) {
+		try {
+			return PyBind.getSocketHandler().call(ref, args, kwargs);
+		} catch (JSONException | InterruptedException | ExecutionException | IOException e) {
+			throw new PyBindException(e);
+		}
 	}
 	
 	@Override
-	public PyVal invoke(Object... values) {
-		return PyBind.getSocketHandler().send(CALL, REF, values).orElse(PyVal.NONE);
+	public PyVal invoke(JSONArray args, JSONObject kwargs) {
+		try {
+			return PyBind.getSocketHandler().invoke(ref, args, kwargs);
+		} catch (JSONException | InterruptedException | ExecutionException | IOException e) {
+			throw new PyBindException(e);
+		}
 	}
 	
 	@Override
@@ -71,7 +71,7 @@ public class PyObj extends PyVal {
 	@Override
 	public PyFunc checkFunction() {
 		if( isFunc() )
-			return new PyFunc(refUUID);
+			return new PyFunc(ref);
 		return super.checkFunction();
 	}
 	
@@ -215,7 +215,7 @@ public class PyObj extends PyVal {
 	}
 	
 	@Override
-	public PyVal attrib(String name) {
+	public PyVal attrib(String name, boolean asRef) {
 		throw new NotImplementedException();
 	}
 	
@@ -250,7 +250,7 @@ public class PyObj extends PyVal {
 	}
 	
 	@Override
-	public Object asJsonValue() {
+	public JSONObject asJsonValue() {
 		throw new NotImplementedException();
 	}
 	

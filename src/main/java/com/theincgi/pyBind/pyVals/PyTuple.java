@@ -2,6 +2,9 @@ package com.theincgi.pyBind.pyVals;
 
 import java.util.StringJoiner;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import com.theincgi.pyBind.PyBindException;
 
 public class PyTuple extends PyVal {
@@ -52,5 +55,16 @@ public class PyTuple extends PyVal {
 	@Override
 	public int len() {
 		return values.length;
+	}
+
+	@Override
+	public JSONObject asJsonValue() {
+		JSONObject obj = new JSONObject();
+		JSONArray values = new JSONArray();
+		for( PyVal v : this.values )
+			values.put(v.asJsonValue());
+		obj.put("type", TYPENAME);
+		obj.put("val", values);
+		return obj;
 	}
 }

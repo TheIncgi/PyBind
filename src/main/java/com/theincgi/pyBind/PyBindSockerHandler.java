@@ -15,8 +15,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.theincgi.pyBind.pyVals.JavaBinds;
 import com.theincgi.pyBind.pyVals.PyFunc;
 import com.theincgi.pyBind.pyVals.PyRef;
+import com.theincgi.pyBind.pyVals.PyTuple;
 import com.theincgi.pyBind.pyVals.PyVal;
 
 public class PyBindSockerHandler implements Closeable {
@@ -45,19 +47,26 @@ public class PyBindSockerHandler implements Closeable {
 		try {
 			while(true) {
 				if( socket.hasJSON() ) {
-					JSONObject obj = socket.readJSON();
-					if(obj.has("id")) {
-						FutureResponse<JSONObject> resp = responses.get(obj.getLong("id"));
-						resp.setResult( obj.getJSONObject("msg") );
+					JSONObject packet = socket.readJSON();
+					if(packet.has("id")) {
+						FutureResponse<JSONObject> resp = responses.get(packet.getLong("id"));
+						resp.setResult( packet.getJSONObject("msg") );
 						
 					}else{
-						String op = obj.getString("op");
+						String op = packet.getString("op");
 						switch(op) {
 							case "ERR":{
-								var msg = obj.getJSONObject("msg");
+								var msg = packet.getJSONObject("msg");
 								FutureResponse<JSONObject> resp = responses.get(msg.getLong("from"));
 								resp.setException(new PyException( msg.getString("msg") ));
 								break;
+							}
+							case "CALL": {
+								var msg = packet.getJSONObject("msg");
+								long ref = msg.getLong("ref");
+								PyVal args = PyVal.fromJson(msg.getJSONObject("args"));
+								var obj = JavaBinds.get( ref );
+								obj.getClass().getMethod(op, null)
 							}
 								
 							default:
@@ -155,13 +164,46 @@ public class PyBindSockerHandler implements Closeable {
 		send(info);
 	}
 	
-	public int countRef(long ref) throws IOException {
+	public int countRef(long ref) throws IOException, InterruptedException, ExecutionException {
 		JSONObject info = new JSONObject();
 		info.put("op", "REFCOUNT");
 		info.put("ref", ref);
-		send(info);
+		JSONObject resp = send(info).get();
+		return PyVal.fromJson(resp).toInt();
 	}
 	
+	public boolean isCallable(long ref) {
+		try {
+			JSONObject info = new JSONObject();
+			info.put("op", "IS_CALLABLE");
+			info.put("ref", ref);
+			JSONObject resp = send(info).get();
+			return PyVal.fromJson(resp).toBool();
+		} catch (JSONException | InterruptedException | ExecutionException | IOException e) {
+			throw new PyBindException(e);
+		}
+	}
+	
+	public long mkRef() throws InterruptedException, ExecutionException, IOException {
+		JSONObject info = new JSONObject();
+		info.put("op", "MKREF");
+		JSONObject resp = send(info).get();
+		return PyVal.fromJson(resp).toInt();
+	}
+	public PyVal attrib(long ref, String name, boolean resultAsRef) {
+		try {
+			JSONObject info = new JSONObject();
+			info.put("op", "GET_ATTR");
+			info.put("ref", ref);
+			info.put("name", name);
+			info.put("asRef", resultAsRef);
+			JSONObject resp = send(info).get();
+			return PyVal.fromJson( resp );
+		} catch (JSONException | InterruptedException | ExecutionException | IOException e) {
+			throw new PyBindException(e);
+		}
+	}
+
 	/**
 	 * Returns PyVal of dereferenced value, or ref if it can't be represented in another way
 	 * */
@@ -271,18 +313,22 @@ public class PyBindSockerHandler implements Closeable {
 		REF,
 		IGNORE;
 	}
-	public PyVal shareJavaObject(long ref, String expectedType, String clas) {
+	public PyRef shareJavaObject(long ref, String expectedType, String clas) {
 		try {
 			JSONObject info = new JSONObject();
 			info.put("op", "JBIND");
 			info.put("expect", expectedType);
 			info.put("class", clas);
 			info.put("ref", ref);
-			JSONObject resp = send(info).get();
-			return PyVal.fromJson( resp );
-		} catch (JSONException | InterruptedException | ExecutionException | IOException e) {
+			send(info);
+			return new PyRef( ref );
+//			return PyVal.fromJson( resp );
+		} catch (JSONException | IOException e) {
 			throw new PyBindException(e);
 		}
 	}
+
+	
+
 	
 }

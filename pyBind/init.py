@@ -8,9 +8,13 @@ from tkinter import N
 import traceback
 from typing import OrderedDict
 from JsonSocket import JsonSocket, isJsonSerializable
+from JavaObj import JavaObj
 
 connection = None
+
 refs = {}
+
+
 _running = False
 
 def _nextRef():
@@ -22,6 +26,19 @@ _nextRef = _nextRef()
 def nextRef():
     return next(_nextRef)
 
+def bindJava( ref, jClass ):
+    key = "J:%d" % (ref,)
+    if key in refs:
+        return refs[key]["ref"]
+    
+    val = JavaObj( connection, ref, jClass )
+
+    refs[ref] = val
+    refs[key] = val
+
+    return ref
+
+
 def bind( module, name ):
     if module not in modules:
         mod = __import__( module, globals(), locals() )
@@ -30,7 +47,7 @@ def bind( module, name ):
         raise Exception("could not import module '%%'" % (module,))
 
     if not hasattr( mod, name ):
-        raise Exception("no attribute %s exists in module %s" % (module, name))
+        raise Exception("no attribute '%s' exists in module '%s'" % (name, module))
 
     key = "M:%s$%s" % (module, name)
     if key in refs:
@@ -59,7 +76,7 @@ def unbind( ref ):
         del refs[ val['key'] ]
         del refs[ val['ref'] ]
 
-def bindReturn( value ):
+def bindReturn( value: any ) -> int:
     wrap = [value]
     ref = nextRef()
     key = "R:%d" % (ref)
@@ -132,6 +149,9 @@ def deserialize( jsonVal, evaluateRefs=True ):
     # print("Debug: deserialize | "+str(jsonVal))
     ty = jsonVal["type"]
 
+    if ty == "NoneType":
+        return None
+
     if ty == "int" or\
        ty == "float" or\
        ty == "str":
@@ -178,6 +198,12 @@ def connectToJava( port ):
     connection = JsonSocket( s )
     print("Python connected")
 
+def wrapRef( refID, rtype="ref" ):
+    return {
+        "type": rtype,
+        "ref": refID
+    }
+
 def runMessageHandler():
     if not connection:
         raise Exception("Not connected")
@@ -208,6 +234,22 @@ def runMessageHandler():
                 
                 v.set( deserialize( msg["value"] ) )
 
+            elif op == "GET_ATTR":
+                ref  = msg["ref"]
+                name = msg["name"]
+                asRef = msg["asRef"]
+
+                obj = refs.get( ref, None )
+                if not obj:
+                    raise Exception("No ref #%d" % (ref,))
+
+                val = getattr( obj, name )
+
+                if asRef:
+                    rsp = wrapRef( bindReturn( result ) )
+                else:
+                    rsp = serialize( result )
+
             elif op == "CALL":
                 ref = refs.get(msg['ref'])["get"]()
                 args = msg['args']
@@ -221,10 +263,10 @@ def runMessageHandler():
                 if msg["mode"] == "COPY":
                     rsp = serialize( result )
                 elif msg["mode"] == "REF":
-                    rsp = bindReturn( result )
+                    rsp = wrapRef( bindReturn( result ) )
 
                 pass
-            elif op == "BIND":
+            elif op == "BIND": # make python available to java
                 lib = msg["lib"]
                 name = msg["name"]
                 ref = bind( module=lib, name=name )
@@ -232,7 +274,7 @@ def runMessageHandler():
                     'type':'ref',
                     'ref':ref
                 }
-            elif op == "UNBIND":
+            elif op == "UNBIND": # delete ref of pyton resource
                 ref = msg["ref"]
                 unbind( ref )
 
@@ -265,6 +307,29 @@ def runMessageHandler():
 
             elif op == "ERR":
                 pass
+            
+            elif op == "MKREF":
+                ref = nextRef()
+                rsp = serialize( ref )
+
+            elif op == "JBIND":
+                ref    = msg["ref"]
+                jclass = msg["class"]
+                bindJava(ref, jclass)
+
+            elif op == "JUNBIND": #python holds only reference to java stuff, GC'd when python is done with it
+                pass
+
+            elif op == "IS_CALLABLE":
+                ref = msg["ref"]
+                val = refs.get(ref, None)
+
+                if isinstance( val, JavaObj ):
+                    pass
+                elif val:
+                    val = val["get"]()
+
+                rsp = serialize( val and callable( val ) )
 
             else:
                 raise Exception("Unhandled op '%s'" % (op))

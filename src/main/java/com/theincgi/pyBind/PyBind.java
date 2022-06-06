@@ -79,6 +79,7 @@ public class PyBind implements AutoCloseable, Closeable{
 			
 			
 			pyProcess.set(launchPython(port));
+			System.out.println("Python PID: " + getPythonPID());
 			
 			try {
 				PyBind.socketHandler.set( new PyBindSockerHandler(socket.get(15, TimeUnit.SECONDS)) );
@@ -123,6 +124,10 @@ public class PyBind implements AutoCloseable, Closeable{
 			}
 		}
 		System.out.println("Copied "+f);
+	}
+	
+	public static long getPythonPID() {
+		return pyProcess.get().pid();
 	}
 	
 	public static String getPyVersion() throws PyBindException {
@@ -200,27 +205,27 @@ public class PyBind implements AutoCloseable, Closeable{
 	 * */
 	public static PyVal bindJava( Object obj ) {
 		long ref = JavaBinds.bind( obj );
-		return PyBind.socketHandler.get().shareJavaObject( ref, "object", obj.getClass().getName() );
+		return socketHandler.get().shareJavaObject( ref, "object", obj.getClass().getName() );
 	}
 	public static PyFunc bindJava( Runnable runnable ) {
 		long ref = JavaBinds.bind( runnable );
-		return PyBind.socketHandler.get().shareJavaObject( ref, "func", runnable.getClass().getName() ).checkFunction();
+		return socketHandler.get().shareJavaObject( ref, "func", runnable.getClass().getName() ).checkFunction();
 	}
 	public static PyFunc bindJava( Supplier<PyVal> supplier ) {
 		long ref = JavaBinds.bind( supplier );
-		return PyBind.socketHandler.get().shareJavaObject( ref, "func", supplier.getClass().getName() ).checkFunction();
+		return socketHandler.get().shareJavaObject( ref, "func", supplier.getClass().getName() ).checkFunction();
 	}
 	public static PyFunc bindJava( Function<PyVal, PyVal> function ) {
 		long ref = JavaBinds.bind( function );
-		return PyBind.socketHandler.get().shareJavaObject( ref, "func", function.getClass().getName() ).checkFunction();
+		return socketHandler.get().shareJavaObject( ref, "func", function.getClass().getName() ).checkFunction();
 	}
 	public static PyFunc bindJava( Consumer<PyVal> consumer ) {
 		long ref = JavaBinds.bind( consumer );
-		return PyBind.socketHandler.get().shareJavaObject( ref, "func", consumer.getClass().getName() ).checkFunction();
+		return socketHandler.get().shareJavaObject( ref, "func", consumer.getClass().getName() ).checkFunction();
 	}
 	public static PyGen bindJava( Iterator<PyVal> iterator ) {
 		long ref = JavaBinds.bind( iterator );
-		return PyBind.socketHandler.get().shareJavaObject( ref, "gen", iterator.getClass().getName() ).checkGen();
+		return socketHandler.get().shareJavaObject( ref, "gen", iterator.getClass().getName() ).checkGen();
 	}
 	
 	public static PyBindSockerHandler getSocketHandler() throws PyBindException {
@@ -228,18 +233,17 @@ public class PyBind implements AutoCloseable, Closeable{
 		return socketHandler.get();
 	}
 	
-	public static void exec(String python) throws PyBindException {
+	public static void exec(String python, PyVal...args) throws PyBindException {
 		init();
 		JSONObject obj = new JSONObject();
 		obj.put("py", python);
-		
 		try {
 			socketHandler.get().send(EXEC, IGNORE, obj);
 		} catch (JSONException | InterruptedException | ExecutionException | IOException e) {
 			throw new PyBindException(e);
 		}
 	}
-	public static PyVal eval(String python) throws PyBindException {
+	public static PyVal eval(String python, PyVal... args) throws PyBindException {
 		init();
 		JSONObject obj = new JSONObject();
 		obj.put("py", python);

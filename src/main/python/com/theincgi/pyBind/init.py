@@ -26,18 +26,17 @@ _nextRef = _nextRef()
 def nextRef():
     return next(_nextRef)
 
-def bindJava( javaRef, jClass ):
-    key = "J:%d" % (javaRef,)
+def bindJava( ref, jClass ):
+    key = "J:%d" % (ref,)
     if key in refs:
         return refs[key]["ref"]
     
-    pyRef = nextRef()
-    val = JavaObj( connection, javaRef, jClass, pyRef)
+    val = JavaObj( connection, ref, jClass )
 
-    refs[pyRef] = val
+    refs[ref] = val
     refs[key] = val
 
-    return pyRef
+    return ref
 
 
 def bind( module, name ):
@@ -77,7 +76,7 @@ def unbind( ref ):
         del refs[ val['key'] ]
         del refs[ val['ref'] ]
 
-def bindReturn( value ):
+def bindReturn( value: any ) -> int:
     wrap = [value]
     ref = nextRef()
     key = "R:%d" % (ref)
@@ -150,6 +149,9 @@ def deserialize( jsonVal, evaluateRefs=True ):
     # print("Debug: deserialize | "+str(jsonVal))
     ty = jsonVal["type"]
 
+    if ty == "NoneType":
+        return None
+
     if ty == "int" or\
        ty == "float" or\
        ty == "str":
@@ -196,6 +198,12 @@ def connectToJava( port ):
     connection = JsonSocket( s )
     print("Python connected")
 
+def wrapRef( refID, rtype="ref" ):
+    return {
+        "type": rtype,
+        "ref": refID
+    }
+
 def runMessageHandler():
     if not connection:
         raise Exception("Not connected")
@@ -226,6 +234,22 @@ def runMessageHandler():
                 
                 v.set( deserialize( msg["value"] ) )
 
+            elif op == "GET_ATTR":
+                ref  = msg["ref"]
+                name = msg["name"]
+                asRef = msg["asRef"]
+
+                obj = refs.get( ref, None )
+                if not obj:
+                    raise Exception("No ref #%d" % (ref,))
+
+                val = getattr( obj, name )
+
+                if asRef:
+                    rsp = wrapRef( bindReturn( result ) )
+                else:
+                    rsp = serialize( result )
+
             elif op == "CALL":
                 ref = refs.get(msg['ref'])["get"]()
                 args = msg['args']
@@ -239,7 +263,7 @@ def runMessageHandler():
                 if msg["mode"] == "COPY":
                     rsp = serialize( result )
                 elif msg["mode"] == "REF":
-                    rsp = bindReturn( result )
+                    rsp = wrapRef( bindReturn( result ) )
 
                 pass
             elif op == "BIND": # make python available to java
@@ -284,12 +308,28 @@ def runMessageHandler():
             elif op == "ERR":
                 pass
             
+            elif op == "MKREF":
+                ref = nextRef()
+                rsp = serialize( ref )
+
             elif op == "JBIND":
-                ref = msg["ref"]
-                exp = msg["expect"]
+                ref    = msg["ref"]
+                jclass = msg["class"]
+                bindJava(ref, jclass)
 
             elif op == "JUNBIND": #python holds only reference to java stuff, GC'd when python is done with it
                 pass
+
+            elif op == "IS_CALLABLE":
+                ref = msg["ref"]
+                val = refs.get(ref, None)
+
+                if isinstance( val, JavaObj ):
+                    pass
+                elif val:
+                    val = val["get"]()
+
+                rsp = serialize( val and callable( val ) )
 
             else:
                 raise Exception("Unhandled op '%s'" % (op))

@@ -1,6 +1,6 @@
 package com.theincgi.pyBind.pyVals;
 
-import com.theincgi.pyBind.PyBindException;
+import org.json.JSONObject;
 
 public class PyNone extends PyVal {
 	public static final String TYPENAME = "NoneType";
@@ -26,6 +26,13 @@ public class PyNone extends PyVal {
 	@Override
 	public boolean toBool() {
 		return false;
+	}
+	
+	@Override
+	public JSONObject asJsonValue() {
+		JSONObject obj = new JSONObject();
+		obj.put("type", TYPENAME);
+		return obj;
 	}
 	
 }

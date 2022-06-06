@@ -87,6 +87,16 @@ public class PyDict extends PyVal{
 	}
 	
 	@Override
+	public Map<PyVal, PyVal> toMap() {
+		return map;
+	}
+	
+	@Override
+	public String toStr() {
+		return map.toString();
+	}
+	
+	@Override
 	public JSONObject asJsonValue() {
 		JSONObject obj = new JSONObject();
 		obj.put("type", TYPENAME);

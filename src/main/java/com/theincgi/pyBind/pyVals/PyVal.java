@@ -1,11 +1,7 @@
 package com.theincgi.pyBind.pyVals;
 
-import static com.theincgi.pyBind.utils.Common.expected;
-
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -439,7 +435,7 @@ public abstract class PyVal {
 	
 	/**
 	 * return the result of len( value )<br>
-	 * may through {@link PyBindException} if it is not valid for this type
+	 * may throw {@link PyBindException} if it is not valid for this type
 	 * */
 	public int len() {
 		throw new PyTypeMismatchException("object of type '%s' has no len()".formatted(getType()));
@@ -447,15 +443,15 @@ public abstract class PyVal {
 	
 	/**
 	 * return an attribute from an object (. operator)<br>
-	 * may through {@link PyBindException} if it is not valid for this type 
+	 * may throw {@link PyBindException} if it is not valid for this type 
 	 * */
-	public PyVal attrib(String name) {
-		return PyBind.getSocketHandler().attrib(this, name);
+	public PyVal attrib(String name, boolean asRef) {
+		throw new NotImplementedException("Whoops, get attribute isn't available for type '"+getType()+"'");
 	}
 	
 	/**
 	 * this[a]<br>
-	 * may through {@link PyBindException} if it is not valid for this type
+	 * may throw {@link PyBindException} if it is not valid for this type
 	 * */
 	public PyVal index(int a) {
 		throw new PyTypeMismatchException( Common.expected("list or tuple", getType()) );
@@ -463,7 +459,7 @@ public abstract class PyVal {
 	
 	/**
 	 * this[a]<br>
-	 * may through {@link PyBindException} if it is not valid for this type<br>
+	 * may throw {@link PyBindException} if it is not valid for this type<br>
 	 * returns def if a is out of bounds or does not exist in dictionary
 	 * */
 	public PyVal index(int a, PyVal def) {
@@ -473,20 +469,11 @@ public abstract class PyVal {
 
 	/**
 	 * this[a:b]<br>
-	 * may through {@link PyBindException} if it is not valid for this type<br>
+	 * may throw {@link PyBindException} if it is not valid for this type<br>
 	 * <b>a and b are both nullable</b>
 	 * */
 	public PyVal index(Integer a, Integer b) {
 		throw new PyTypeMismatchException( Common.expected("list or tuple", getType()) );
-	}
-	
-	/**
-	 * this[a:b]<br>
-	 * may through {@link PyBindException} if it is not valid for this type<br>
-	 * returns def if a is out of bounds or does not exist in dictionary
-	 * */
-	public PyVal index(Integer a, Integer b, PyVal def) {
-		throw new PyTypeMismatchException( Common.expected("list or tuple", getType()) );		
 	}
 	
 	/**
@@ -527,7 +514,9 @@ public abstract class PyVal {
 	 * For dictionaries, key value pairs are extracted<br>
 	 * For objects, attribute key value pairs are extracted
 	 * */
-	public abstract LinkedHashMap<PyVal, PyVal> toMap();
+	public Map<PyVal, PyVal> toMap(){
+		throw new PyTypeMismatchException( Common.expected("dict", getType()) );		
+	}
 
 	/**
 	 * Return true if this is a generator
@@ -569,7 +558,7 @@ public abstract class PyVal {
 		
 		switch( type ) {
 			case PyBool.TYPENAME:
-				return PyBool.toPyVal( val.equals("True"));
+				return PyBool.toPyVal( val.toLowerCase().equals("true"));
 			
 			case PyFloat.TYPENAME:
 				return new PyFloat( Double.parseDouble(val) );

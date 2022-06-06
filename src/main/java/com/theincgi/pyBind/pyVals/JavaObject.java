@@ -1,17 +1,16 @@
 package com.theincgi.pyBind.pyVals;
 
-import java.util.LinkedHashMap;
-
 import org.json.JSONObject;
 
 public class JavaObject extends PyVal {
 	public static final String TYPENAME = "java_object"; 
 	
+	//
 	private long refID;
 	
 	public JavaObject( long refID ) {
 		JavaBinds.checkExists( refID );
-		refID = refID;
+		this.refID = refID;
 	}
 	
 	public JavaObject( Object obj ) {

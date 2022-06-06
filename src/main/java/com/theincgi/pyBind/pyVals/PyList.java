@@ -96,12 +96,27 @@ public class PyList extends PyVal {
 	}
 	
 	@Override
-	public PyVal index(PyRef r) {
-		if(r.isInt()) {
-			return index(r.toInt());
-		}
-		throw new PyException("Expected reference to int type, got "+r.getType());
+	public PyVal index(PyVal v) {
+		return index(v.checkInt().intVal());
 	}
+	
+	@Override
+	public PyVal index(int a, PyVal def) {
+		if( a < 0 || len() <= a ) return def;
+		return index(a);
+	}
+	
+	@Override
+	public PyVal index(PyVal v, PyVal def) {
+		return index( v.checkInt().toInt(), def );
+	}
+//	@Override
+//	public PyVal index(PyRef r) {
+//		if(r.isInt()) {
+//			return index(r.toInt());
+//		}
+//		throw new PyException("Expected reference to int type, got "+r.getType());
+//	}
 	
 	@Override
 	public JSONObject asJsonValue() {

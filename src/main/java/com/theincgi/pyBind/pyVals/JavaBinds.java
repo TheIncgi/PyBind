@@ -1,27 +1,16 @@
 package com.theincgi.pyBind.pyVals;
 
 import java.io.IOException;
-import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.WeakHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
-
-import org.luaj.vm2_v3_0_1.LuaValue;
-import org.luaj.vm2_v3_0_1.Varargs;
-import org.luaj.vm2_v3_0_1.lib.jse.CoerceLuaToJava;
-import org.luaj.vm2_v3_0_1.lib.jse.JavaConstructor;
+import java.util.concurrent.ExecutionException;
 
 import com.theincgi.pyBind.Cleanup;
 import com.theincgi.pyBind.PyBind;
 import com.theincgi.pyBind.PyBindException;
-import com.theincgi.pyBind.utils.Common;
 import com.theincgi.pyBind.utils.SoftHashMap;
 
 /*
@@ -32,22 +21,36 @@ public class JavaBinds {
 	private static final ThreadLocal< HashMap<Long, Object> > pyOnly = ThreadLocal.withInitial( HashMap::new );
 	private static final ThreadLocal< HashMap<Long, Reference<Object>>> javaRefWatch = ThreadLocal.withInitial( HashMap::new );
 	private static final ThreadLocal< SoftHashMap<Object, Long>> lookup  = ThreadLocal.withInitial( SoftHashMap::new );
-	private static final ThreadLocal< AtomicLong > refID = ThreadLocal.withInitial( AtomicLong::new );
+//	private static final ThreadLocal< AtomicLong > refID = ThreadLocal.withInitial( AtomicLong::new );
 	
 	
 	private JavaBinds() {
 		
 	}
 	
+	private static long getNextRef() throws PyBindException {
+		try {
+			return PyBind.getSocketHandler().mkRef();
+		} catch ( InterruptedException | ExecutionException | IOException e) {
+			throw new PyBindException(e);
+		}
+	}
 	
-	public static long bind( Object obj ) {
+	public static long bind( Object obj ) throws PyBindException {
+		long ref = getNextRef();
+		return bind( obj, ref );
+	}
+	
+	/**
+	 * Used when using static get(long ref), re-uses old ref id
+	 * */
+	private static long bind( Object obj, long ref ) {
 		return lookup.get().computeIfAbsent( obj, v -> {
-			long ref = refID.get().getAndIncrement();
 			var soft = Cleanup.soft(obj, a->{
 				try {
 					if(isRemotelyReferenced(a))
 						pyOnly.get().put(ref, a);
-				} catch (PyBindException | IOException e) {
+				} catch (PyBindException | IOException | InterruptedException | ExecutionException e) {
 					e.printStackTrace();
 					//GC'd!
 				}
@@ -74,7 +77,7 @@ public class JavaBinds {
 		long ref = lookup.get().get(obj);
 		return javaRefWatch.get().get(ref).get()!=null;
 	}
-	public static boolean isRemotelyReferenced(Object obj) throws PyBindException, IOException {
+	public static boolean isRemotelyReferenced(Object obj) throws PyBindException, IOException, InterruptedException, ExecutionException {
 		long ref = lookup.get().get(obj);
 		return PyBind.getSocketHandler().countRef(ref) > 1;
 	}
