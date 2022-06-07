@@ -2,6 +2,7 @@ package com.theincgi.pyBind;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Optional;
@@ -66,7 +67,17 @@ public class PyBindSockerHandler implements Closeable {
 								long ref = msg.getLong("ref");
 								PyVal args = PyVal.fromJson(msg.getJSONObject("args"));
 								var obj = JavaBinds.get( ref );
-								obj.getClass().getMethod(op, null)
+								
+								String sig = msg.optString("sig", null);
+								if( sig!=null  ) {
+									
+									for(Method m : obj.getClass().getMethods()) {
+										m.
+									}
+								}else {
+									
+								}
+								
 							}
 								
 							default:
