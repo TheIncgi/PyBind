@@ -3,6 +3,7 @@ package com.theincgi.pyBind.utils;
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.List;
 
 import com.theincgi.pyBind.Kwarg;
 import com.theincgi.pyBind.NotImplementedException;
+import com.theincgi.pyBind.pyVals.PyTuple;
 import com.theincgi.pyBind.pyVals.PyVal;
 
 public class Common {
@@ -112,5 +114,27 @@ public class Common {
 		
 		throw new NotImplementedException(to.getName()+" not implemented");
 		
+	}
+	
+	public static String getMethodSignature( Method m ) {
+		try {
+			java.lang.reflect.Field f = java.lang.reflect.Method.class.getDeclaredField("signature");
+			f.setAccessible(true);
+			return (String) f.get( m );
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			System.err.println("Caught err, returning null");
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public static Method chooseMethod(Class<? extends Object> class1, PyTuple args) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public static Object[] coerceArgs(Method method, PyTuple args) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

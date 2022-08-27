@@ -21,6 +21,7 @@ import com.theincgi.pyBind.pyVals.PyFunc;
 import com.theincgi.pyBind.pyVals.PyRef;
 import com.theincgi.pyBind.pyVals.PyTuple;
 import com.theincgi.pyBind.pyVals.PyVal;
+import com.theincgi.pyBind.utils.Common;
 
 public class PyBindSockerHandler implements Closeable {
 	private JSONSocket socket;
@@ -69,14 +70,21 @@ public class PyBindSockerHandler implements Closeable {
 								var obj = JavaBinds.get( ref );
 								
 								String sig = msg.optString("sig", null);
+								Method method = null;
 								if( sig!=null  ) {
 									
 									for(Method m : obj.getClass().getMethods()) {
-										m.
+										if(Common.getMethodSignature( m ).equals(sig)) {
+											method = m;
+											break;
+										}
 									}
 								}else {
-									
+									method = Common.chooseMethod( obj.getClass(), args );
 								}
+								
+								Object[] coerced = Common.coerceArgs( method, args );
+								Object result = method.invoke( obj, coerced );
 								
 							}
 								

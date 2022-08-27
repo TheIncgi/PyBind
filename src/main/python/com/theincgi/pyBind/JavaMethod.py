@@ -5,8 +5,8 @@ class JavaMethod:
         self.obj = javaObject
         pass
     
-    def call( self, *args: any, signature:str =None ):
-        self.obj.connection.send(/**/)
+    def call( self, *args: any, signature:list =None, varArgs=False ):
+        self.obj.connection.send()
         pass
 
     def __call__(self, *args: any, **kwds: any) -> any:
